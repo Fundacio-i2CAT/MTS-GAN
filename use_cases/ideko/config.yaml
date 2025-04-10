@@ -1,0 +1,99 @@
+data:
+  dataset_path: "/data/ideko/raw_data_splited/raw_data_subsampled_20/not_anomalous"
+  split_proportion: 0.2
+  random_seed: 12345
+  normalization: "min_max" #None, min_max, standarization
+  seq_len: 300
+  num_channels: 2
+  verbose: False
+  debug: False
+  val_metric: "cosine_similarity" # cosine_similarity, jensen_shannon_divergence, fid_score
+
+
+mlflow:
+  URI: "http://0.0.0.0:5012"
+  experiment_id: "test"
+  is_used: True
+ 
+trainer:
+  batch_size: 16
+  epochs: 500  #500
+  g_lr: 0.0001
+  d_lr: 0.00005
+  n_critic: 1 #total updates discriminator before updating discriminator. the generator is trained each n_critic*g_accumulated_times
+  g_accumulated_times: 1 #iterations before optimizing generator
+  d_accumulated_times: 1 #iterations before optimizing discriminator
+  early_stopping: 10
+ 
+  optimizer:
+    optimizer_name: adam #adamw
+    adam:
+      beta1: 0.9
+      beta2: 0.999
+    adamw:
+      weight_decay: 0.01
+
+  scheduler:
+    
+    g_scheduler:
+      scheduler_name: linear #linear, constant,exponential
+      exponential:
+        gamma: 0.999
+      linear:
+        star_factor: 1.0 # Initial ratio of lr
+        end_factor: 0.1 # Final ratio of lr. on last epoch lr = initial_lr * end_factor
+        iterations: 30000 # total number of iterations the lr is updated, its updated at every batch. epochs * num_natches(~50)
+
+    #linear, constant
+    d_scheduler:
+      scheduler_name: linear #linear, constant,exponential
+      exponential:
+        emma: 0.999
+      linear:
+        star_factor: 1.0
+        end_factor: 0.1
+        iterations: 30000 # total number of iterations the lr is updated, its updated at every batch. epochs * num_natches(~50)
+
+  loss: 
+    g_loss:
+      loss_name: "lsgan" #standard, hinge, lsgan, wgangp
+      wgangp:
+        phi: 5
+    d_loss:
+      loss_name: "lsgan" #standard, lsgan, wgangp, wgangp-mode
+
+
+
+
+validator:
+  batch_size: 32
+  val_freq: 10
+
+network:
+  generator:
+      seq_len: 300             # Sequence length in the Generator
+      channels: 2               # Output channels (number of features of the time series)
+      patch_size: 2             # Patch size for the Generator
+      latent_dim: 100           # Latent dimension (size of input noise vector)
+      embed_dim: 10             # Embedding dimension (output of the transformer block)
+      depth: 3                  # Depth of the transformer encoder (number of layers)
+      num_heads: 10             # Number of attention heads in each multi-head attention layer
+      forward_drop_rate: 0.2    # Dropout rate in the feedforward network
+      attn_drop_rate: 0.2       # Dropout rate in the attention layer
+      ema: 0.99999              # Exponential moving Average decay factor
+
+
+  discriminator:
+      in_channels: 2            # Input channels (same as generator)
+      patch_size: 2             # Patch size for the Discriminator
+      emb_size: 100             # Embedding size (dimension of the transformer output)
+      seq_length: 300           # Sequence length for the Discriminator (adjust as necessary)
+      depth: 3                  # Depth of the transformer encoder (number of layers)
+      n_classes: 1              # Number of output classes (typically 1 for binary classification: real/fake)
+      drop_p: 0.5               # Dropout probability for attention layer
+      forward_drop_p: 0.5       # Dropout probability for feedforward layer
+    
+  init_type: 'xavier_uniform' #orth, xavier_uniform, normal
+
+ 
+

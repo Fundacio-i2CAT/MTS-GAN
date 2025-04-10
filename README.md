@@ -1,4 +1,4 @@
-# TTS_GAN
+# mamba_gan
 
 
 
@@ -15,14 +15,14 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
-git remote add origin https://gitlab.i2cat.net/rdprojects/extremexp/data-augmentation/tts-gan.git
+git remote add origin https://gitlab.i2cat.net/rdprojects/extremexp/data-augmentation/mamba_gan.git
 git branch -M main
 git push -uf origin main
 ```
 
 ## Integrate with your tools
 
-- [ ] [Set up project integrations](https://gitlab.i2cat.net/rdprojects/extremexp/data-augmentation/tts-gan/-/settings/integrations)
+- [ ] [Set up project integrations](https://gitlab.i2cat.net/rdprojects/extremexp/data-augmentation/mamba_gan/-/settings/integrations)
 
 ## Collaborate with your team
 

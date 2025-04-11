@@ -26,11 +26,11 @@ def main(args: Namespace):
     device = ut.set_device()
 
     # Initialization Dataloaders
-    train_set = IdekoDatasetLoader(data_mode="Train", config=config["data"])
+    train_set = IdekoDatasetLoader(data_mode="train", config=config["data"])
     train_loader = data.DataLoader(train_set, batch_size=config["trainer"]["batch_size"], shuffle=True)
-    validation_set = IdekoDatasetLoader(data_mode="Validation", config=config["data"])
+    validation_set = IdekoDatasetLoader(data_mode="val", config=config["data"], min_values=train_set.min_values, max_values=train_set.max_values)
     validation_loader = data.DataLoader(validation_set, batch_size=config["validator"]["batch_size"], shuffle=True)
-     
+
     # Network initialization
     gen_net = generator.Generator(config["network"]["generator"])
     dis_net = discriminator.Discriminator(config["network"]["discriminator"])

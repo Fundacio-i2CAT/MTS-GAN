@@ -1,18 +1,18 @@
 data:
-  dataset_path: "/data/ideko/raw_data_splited/raw_data_subsampled_20/not_anomalous"
-  split_proportion: 0.2
-  random_seed: 12345
-  normalization: "min_max" #None, min_max, standarization
-  seq_len: 300
+  train_path: "/data/ideko_david/raw_data_splitted/not_anomalous/1_periods/20_subs/60_train"
+  val_path: "/data/ideko_david/raw_data_splitted/not_anomalous/1_periods/20_subs/20_val"
+  test_path: "/data/ideko_david/raw_data_splitted/not_anomalous/1_periods/20_subs/20_test"
+  normalization: "global_min_max"
+  features: ["f2", "f3"]
   num_channels: 2
+  seq_len: 300
   verbose: False
   debug: False
-  val_metric: "cosine_similarity" # cosine_similarity, jensen_shannon_divergence, fid_score
-
+  random_seed: 42
 
 mlflow:
-  URI: "http://0.0.0.0:5012"
-  experiment_id: "test"
+  URI: "http://0.0.0.0:5006"
+  experiment_id: "not_anomalous"
   is_used: True
  
 trainer:
@@ -36,7 +36,7 @@ trainer:
   scheduler:
     
     g_scheduler:
-      scheduler_name: linear #linear, constant,exponential
+      scheduler_name: linear #linear, constant, exponential
       exponential:
         gamma: 0.999
       linear:
@@ -71,7 +71,7 @@ validator:
 
 network:
   generator:
-      seq_len: 300             # Sequence length in the Generator
+      seq_len: 300              # Sequence length in the Generator
       channels: 2               # Output channels (number of features of the time series)
       patch_size: 2             # Patch size for the Generator
       latent_dim: 100           # Latent dimension (size of input noise vector)

@@ -24,7 +24,7 @@ def compute_fid(real_features, fake_features):
 
 
 def average_cosine_similarity(real_signals, synthetic_signals):
- 
+    """Compute the average Cosine Similarity between the synthetic signals and the real ones"""
     similarities = cosine_similarity(synthetic_signals, real_signals)
     mean_similarities = np.mean(similarities, axis=1)
     return np.mean(mean_similarities)
@@ -102,6 +102,7 @@ def compute_metrics(real_data, synthetic_data):
     m = {f"{feature}_{metric}": value for feature, values in metrics.items() for metric, value in values.items()}
 
     # Add overall/global averages
+    # Compares every synthetic signal with 
     m.update({
         "average_cosine_similarity": np.mean(avg_cosine_list),
         "average_jensen_shannon_divergence": np.mean(avg_js_list),

@@ -46,7 +46,7 @@ def validate(gen_net: torch.nn.Module, validation_loader: data.DataLoader, confi
     return validation_metrics
 
 
-def gen_plot(gen_net, epoch, config):
+def gen_plot(gen_net, epoch, config, min_value, max_value):
 
     synthetic_data = []
 
@@ -65,7 +65,9 @@ def gen_plot(gen_net, epoch, config):
          
             data = synthetic_data[row * 3 + col]
             feature_data = data[0, feature_index, 0, :] 
-            axs[row, col].plot(feature_data)
+            scaled_data = feature_data * (max_value - min_value) + min_value
+
+            axs[row, col].plot(scaled_data)
             axs[row, col].set_title(f'Feature f{feature_index + 1}, Plot {col + 1}', fontsize=15)
             axs[row, col].set_xlabel('Time')
             axs[row, col].set_ylabel(f'f{feature_index + 1}')

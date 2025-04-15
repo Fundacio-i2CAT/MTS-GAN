@@ -9,6 +9,8 @@ data:
   verbose: False
   debug: False
   random_seed: 42
+  val_metric: "cosine_similarity" # cosine_similarity, jensen_shannon_divergence, fid_score
+
 
 mlflow:
   URI: "http://0.0.0.0:5006"

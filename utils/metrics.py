@@ -102,7 +102,6 @@ def compute_metrics(real_data, synthetic_data):
     m = {f"{feature}_{metric}": value for feature, values in metrics.items() for metric, value in values.items()}
 
     # Add overall/global averages
-    # Compares every synthetic signal with 
     m.update({
         "average_cosine_similarity": np.mean(avg_cosine_list),
         "average_jensen_shannon_divergence": np.mean(avg_js_list),

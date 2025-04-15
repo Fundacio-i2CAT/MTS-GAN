@@ -29,9 +29,8 @@ def compute_d_loss(real_ts, fake_ts, real_validity, fake_validity,
 
     elif loss_name == 'wgangp':
         phi = config["wgangp"]["phi"]
-        gradient_penalty = compute_gradient_penalty(dis_net, real_ts, fake_ts, phi)
-        d_loss = -torch.mean(real_validity) + torch.mean(fake_validity) + gradient_penalty * 10 / (
-                phi ** 2)
+        gradient_penalty = compute_gradient_penalty(dis_net, real_ts, fake_ts, phi, device)
+        d_loss = -torch.mean(real_validity) + torch.mean(fake_validity) + gradient_penalty * 10 / (phi ** 2)
 
     else:
         logger.error("Discriminator Loss not implemented")
@@ -75,7 +74,11 @@ def compute_gradient_penalty(dis_net, real_ts, fake_ts, phi, device):
     """Compute gradient penalty for WGAN-GP."""
     batch_size = real_ts.shape[0]
 
-    alpha = torch.rand(batch_size, 1, 1, device=device)   
+    # alpha con num. dimensiones real_ts y tam. 1 en las otras
+    alpha_shape = [batch_size] + [1] * (real_ts.dim() - 1)
+    alpha = torch.rand(alpha_shape, device=device)
+
+    # interpolación entre real y fake
     interpolates = alpha * real_ts + (1 - alpha) * fake_ts
     interpolates.requires_grad_(True)  
  
@@ -89,8 +92,8 @@ def compute_gradient_penalty(dis_net, real_ts, fake_ts, phi, device):
         retain_graph=True,
         only_inputs=True
     )[0]  
- 
-    gradient_norm = gradients.view(batch_size, -1).norm(2, dim=1)  # L2 norm
+
+    gradient_norm = gradients.reshape(batch_size, -1).norm(2, dim=1)  # L2 norm
     gradient_penalty = ((gradient_norm - 1) ** 2).mean()  # Squared deviation from 1
 
     return gradient_penalty * (10 / phi ** 2)

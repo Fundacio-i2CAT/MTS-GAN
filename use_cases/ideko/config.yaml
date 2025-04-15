@@ -63,6 +63,8 @@ trainer:
         phi: 5
     d_loss:
       loss_name: "standard" #standard, lsgan, wgangp, wgangp-mode
+      wgangp:
+        phi: 5 
 
 
 

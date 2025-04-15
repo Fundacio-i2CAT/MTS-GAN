@@ -62,7 +62,7 @@ def main(args: Namespace):
     start_epoch = 0
     val_start_epoch = 0
     model_not_improved = 0
-    val_metric = config["data"].get("val_score", "fid_score")
+    val_metric = config["data"].get("val_metric", "fid_score")
     
     if val_metric in ["fid_score", "jensen_shannon_divergence"]:
         best_val_metric = float("inf")

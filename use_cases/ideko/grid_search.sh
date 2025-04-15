@@ -1,4 +1,4 @@
-CURRENT_PATH="/data/ideko_david/GSconfigs/optimization_params"
+CURRENT_PATH="/data/ideko_david/GSconfigs/learning_rates"
 VENV_PATH="/data/ideko_david/environments/tts_gan"
 
 source "$VENV_PATH/bin/activate"

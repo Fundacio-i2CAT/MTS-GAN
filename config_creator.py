@@ -39,7 +39,7 @@ import os
 
 config_path = "use_cases/ideko/config.yaml"
 base_config = ut.load_yaml(config_path)
-root_path_save = "/data/ideko_david/GSconfigs/optimization_params"
+root_path_save = "/data/ideko_david/GSconfigs/learning_rates"
 os.makedirs(root_path_save, exist_ok=True)
 
 param_grid = {
@@ -49,13 +49,13 @@ param_grid = {
     "depth": [2],
     "num_heads": [4],
 
-    "g_lr": [0.0001],
-    "d_lr": [0.00005],
+    "g_lr": [0.00005, 0.0001, 0.0002, 0.0005],
+    "d_lr": [0.00005, 0.0001, 0.0002, 0.0005],
     "n_critic": [1],
-    "g_scheduler_name": ["linear", "constant", "exponential"],
-    "d_scheduler_name": ["linear", "constant", "exponential"],
-    "loss": ["standard", "hinge", "lsgan", "wgangp"],
-
+    "g_scheduler_name": ["linear"],
+    "d_scheduler_name": ["linear"],
+    "g_loss": ["standard"],
+    "d_loss": ["standard"],
 }
 grid_search_configs = list(itertools.product(*param_grid.values()))
 
@@ -66,14 +66,10 @@ for i, values in enumerate(grid_search_configs):
     # Structure parameters
     config["network"]["generator"]["patch_size"] = values[0]
     config["network"]["discriminator"]["patch_size"] = values[0]
-
     config["network"]["generator"]["latent_dim"] = values[1]
-    
     config["network"]["generator"]["embed_dim"] = values[2]
-
     config["network"]["generator"]["depth"] = values[3]
     config["network"]["discriminator"]["depth"] = values[3]
-
     config["network"]["generator"]["num_heads"] = values[4]
 
     # Optimization parameters
@@ -83,7 +79,7 @@ for i, values in enumerate(grid_search_configs):
     config["trainer"]["scheduler"]["g_scheduler"]["scheduler_name"] = values[8]
     config["trainer"]["scheduler"]["d_scheduler"]["scheduler_name"] = values[9]
     config["trainer"]["loss"]["g_loss"]["loss_name"] = values[10]
-    config["trainer"]["loss"]["d_loss"]["loss_name"] = values[10]
+    config["trainer"]["loss"]["d_loss"]["loss_name"] = values[11]
     
     # Save new config file
     config_filename = os.path.join(root_path_save, f"config_{i}.yaml")

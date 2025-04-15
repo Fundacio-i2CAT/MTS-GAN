@@ -58,11 +58,11 @@ trainer:
 
   loss: 
     g_loss:
-      loss_name: "lsgan" #standard, hinge, lsgan, wgangp
+      loss_name: "standard" #standard, hinge, lsgan, wgangp
       wgangp:
         phi: 5
     d_loss:
-      loss_name: "lsgan" #standard, lsgan, wgangp, wgangp-mode
+      loss_name: "standard" #standard, lsgan, wgangp, wgangp-mode
 
 
 

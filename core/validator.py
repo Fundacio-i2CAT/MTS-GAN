@@ -49,7 +49,6 @@ def validate(gen_net: torch.nn.Module, validation_loader: data.DataLoader, confi
 def gen_plot(gen_net, epoch, config, min_value, max_value):
 
     synthetic_data = []
-
     device = next(gen_net.parameters()).device
 
     for i in range(6):
@@ -60,17 +59,18 @@ def gen_plot(gen_net, epoch, config, min_value, max_value):
     fig, axs = plt.subplots(2, 3, figsize=(15, 8))
     fig.suptitle(f'Synthetic samples at epoch {epoch}', fontsize=20)
 
+    features = ["f2", "f3"]
     for row, feature_index in enumerate(range(2)): 
+        key = features[feature_index]
         for col in range(3): 
-         
             data = synthetic_data[row * 3 + col]
             feature_data = data[0, feature_index, 0, :] 
-            scaled_data = feature_data * (max_value - min_value) + min_value
+            scaled_data = feature_data * (max_value[key] - min_value[key]) + min_value[key]
 
             axs[row, col].plot(scaled_data)
-            axs[row, col].set_title(f'Feature f{feature_index + 1}, Plot {col + 1}', fontsize=15)
+            axs[row, col].set_title(f'Feature {key}, Plot {col + 1}', fontsize=15)
             axs[row, col].set_xlabel('Time')
-            axs[row, col].set_ylabel(f'f{feature_index + 1}')
+            axs[row, col].set_ylabel(f'{key}')
 
     plt.subplots_adjust(hspace=0.4)
     temp_filename = f"{epoch}_epoch.jpeg"

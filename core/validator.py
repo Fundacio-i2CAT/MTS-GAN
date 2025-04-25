@@ -21,7 +21,7 @@ def validate(gen_net: torch.nn.Module, validation_loader: data.DataLoader, confi
  
     with torch.no_grad():
 
-        for iter_idx, (ts, _) in enumerate(tqdm(validation_loader, desc="Validation Progress", unit="batch")):
+        for iter_idx, ts in enumerate(tqdm(validation_loader, desc="Validation Progress", unit="batch")):
             real_ts = ts.to(device, dtype=torch.float, non_blocking=True)
             z = torch.randn(ts.shape[0], config["network"]["generator"]["latent_dim"], device=device)
             fake_ts = gen_net(z)

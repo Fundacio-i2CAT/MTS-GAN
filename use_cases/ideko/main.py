@@ -3,8 +3,11 @@ from argparse import Namespace
 from torch.utils import data
 import mlflow
 import logging
-from copy import deepcopy
+import h5py
+import torch
 
+from copy import deepcopy
+import numpy as np
 import core.trainer as trainer
 import core.validator as validator
 from use_cases.ideko.dataLoader import IdekoDatasetLoader
@@ -26,11 +29,24 @@ def main(args: Namespace):
     device = ut.set_device()
 
     # Initialization Dataloaders
-    train_set = IdekoDatasetLoader(data_mode="Train", config=config["data"])
-    train_loader = data.DataLoader(train_set, batch_size=config["trainer"]["batch_size"], shuffle=True)
-    validation_set = IdekoDatasetLoader(data_mode="Validation", config=config["data"])
-    validation_loader = data.DataLoader(validation_set, batch_size=config["validator"]["batch_size"], shuffle=True)
-     
+    with h5py.File(config['data']['dataset_path'], 'r') as f:
+        train_data = f['train'][:]
+        validation_data = f['val'][:]
+
+    train_set = IdekoDatasetLoader(train_data, norm=config['data']['normalization'])
+    validation_set = IdekoDatasetLoader(validation_data, norm=config['data']['normalization'], stats=train_set.stats)
+    
+    def add_extra_dim(batch):
+        # Transpose to (num_samples, num_channels, max_rows)
+        batch = np.transpose(batch, (0, 2, 1))  
+        # Reshape to (num_samples, num_channels, 1, seq_len)
+        batch = batch.reshape(batch.shape[0], config["data"]["num_channels"], 1, config["data"]["seq_len"])
+        batch = torch.from_numpy(batch).float()  
+        return batch
+
+    train_loader = data.DataLoader(train_set, batch_size=config["trainer"]["batch_size"], shuffle=True, collate_fn=add_extra_dim)
+    validation_loader = data.DataLoader(validation_set, batch_size=config["trainer"]["batch_size"], shuffle=True, collate_fn=add_extra_dim)
+
     # Network initialization
     gen_net = generator.Generator(config["network"]["generator"])
     dis_net = discriminator.Discriminator(config["network"]["discriminator"])

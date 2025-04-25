@@ -98,7 +98,7 @@ def train(gen_net: nn.Module, dis_net: nn.Module, train_loader: data.DataLoader,
     g_losses = []
     progress_bar = tqdm(train_loader, dynamic_ncols=True)
 
-    for iter_idx, (ts, _) in enumerate(progress_bar):
+    for iter_idx, ts in enumerate(progress_bar):
         real_ts = ts.to(device, dtype=torch.float, non_blocking=True)
 
         d_loss = train_discriminator(gen_net, dis_net, dis_optimizer, dis_scheduler, real_ts, 

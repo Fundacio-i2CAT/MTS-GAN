@@ -25,8 +25,12 @@ class Generator(nn.Module):
         self.forward_drop_rate = config.get('forward_drop_rate', 0.1)
         self.num_heads = config.get('num_heads', 8)
 
-        self.l1 = nn.Linear(self.latent_dim, self.seq_len * self.embed_dim)
-        self.pos_embed = nn.Parameter(torch.zeros(1, self.seq_len, self.embed_dim))
+        assert self.seq_len % self.patch_size == 0, \
+            "seq_len must be an exact multiple of patch_size"
+
+        self.tokens = self.seq_len // self.patch_size
+        self.l1 = nn.Linear(self.latent_dim, self.tokens * self.embed_dim)
+        self.pos_embed = nn.Parameter(torch.zeros(1, self.tokens, self.embed_dim))
         self.blocks = Gen_TransformerEncoder(
                          depth=self.depth,
                          num_heads = self.num_heads,
@@ -40,14 +44,17 @@ class Generator(nn.Module):
         )
 
     def forward(self, z):
-        x = self.l1(z).view(-1, self.seq_len, self.embed_dim)
+        x = self.l1(z).view(-1, self.tokens, self.embed_dim)
         x = x + self.pos_embed
         H, W = 1, self.seq_len
         x = self.blocks(x)
         x = x.reshape(x.shape[0], 1, x.shape[1], x.shape[2])
         output = self.deconv(x.permute(0, 3, 1, 2))
-        output = output.view(-1, self.channels, H, W)
-        return output
+
+        out = output.repeat_interleave(self.patch_size, dim=-1)
+        B = out.shape[0]
+        out = out.view(B, self.channels, H, W)
+        return out
     
     
 class Gen_TransformerEncoderBlock(nn.Sequential):

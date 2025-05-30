@@ -1,5 +1,5 @@
 data:
-  dataset_path: "/data/ideko/raw_data_splited/raw_data_subsampled_20/not_anomalous"
+  dataset_path: "/data/datasets_ori/ideko/1periods_20subsampling_300seqLen.h5"
   split_proportion: 0.2
   random_seed: 12345
   normalization: "min_max" #None, min_max, standarization
@@ -7,12 +7,12 @@ data:
   num_channels: 2
   verbose: False
   debug: False
-  val_metric: "cosine_similarity" # cosine_similarity, jensen_shannon_divergence, fid_score
+  val_metric: "jensen_shannon_divergence" # cosine_similarity, jensen_shannon_divergence, fid_score
 
 
 mlflow:
-  URI: "http://0.0.0.0:5012"
-  experiment_id: "test"
+  URI: "http://0.0.0.0:5003"
+  experiment_id: "tryout_merge"
   is_used: True
  
 trainer:
@@ -61,9 +61,6 @@ trainer:
         phi: 5
     d_loss:
       loss_name: "lsgan" #standard, lsgan, wgangp, wgangp-mode
-
-
-
 
 validator:
   batch_size: 32

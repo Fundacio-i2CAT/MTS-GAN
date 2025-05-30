@@ -10,7 +10,7 @@ from copy import deepcopy
 import numpy as np
 import core.trainer as trainer
 import core.validator as validator
-from use_cases.ideko.dataLoader import IdekoDatasetLoader
+from data.dataLoader import IdekoDatasetLoader
 from architecture import discriminator, generator
 import utils.utils as ut
 import utils.optimizer as opt
@@ -152,7 +152,7 @@ def main(args: Namespace):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default="use_cases/ideko/config.yaml",
+    parser.add_argument("--config", type=str, default="config.yaml",
                         help="Path to YAML config file")
     args = parser.parse_args()
     main(args)

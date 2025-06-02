@@ -65,8 +65,8 @@ def main(args: Namespace):
     gen_optimizer = opt.get_optimizer(config, config["trainer"]["g_lr"], gen_net.parameters())
     dis_optimizer = opt.get_optimizer(config, config["trainer"]["d_lr"], dis_net.parameters())
 
-    gen_scheduler = opt.get_scheduler(gen_optimizer, config["trainer"]['scheduler']["g_scheduler"])
-    dis_scheduler = opt.get_scheduler(dis_optimizer, config["trainer"]['scheduler']["d_scheduler"])
+    gen_scheduler = opt.get_scheduler(gen_optimizer, config["trainer"]['scheduler']["g_scheduler"], total_iters=config["trainer"]["epochs"] * len(train_loader))
+    dis_scheduler = opt.get_scheduler(dis_optimizer, config["trainer"]['scheduler']["d_scheduler"], total_iters=config["trainer"]["epochs"] * len(train_loader))
     
     # Exponential Moving Average 
     avg_gen_net = deepcopy(gen_net).cpu()

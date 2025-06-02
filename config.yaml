@@ -42,7 +42,6 @@ trainer:
       linear:
         star_factor: 1.0 # Initial ratio of lr
         end_factor: 0.1 # Final ratio of lr. on last epoch lr = initial_lr * end_factor
-        iterations: 30000 # total number of iterations the lr is updated, its updated at every batch. epochs * num_natches(~50)
 
     #linear, constant
     d_scheduler:
@@ -52,7 +51,6 @@ trainer:
       linear:
         star_factor: 1.0
         end_factor: 0.1
-        iterations: 30000 # total number of iterations the lr is updated, its updated at every batch. epochs * num_natches(~50)
 
   loss: 
     g_loss:

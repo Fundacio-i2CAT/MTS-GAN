@@ -26,14 +26,13 @@ def get_optimizer(config: dict, lr: float, parameters) -> Optimizer:
         raise ValueError(f"Unsupported optimizer: {optimizer_name}")
 
 
-def get_scheduler(optimizer: Optimizer, config: dict) -> lr_scheduler._LRScheduler:
+def get_scheduler(optimizer: Optimizer, config: dict, total_iters: int = 0) -> lr_scheduler._LRScheduler:
 
     scheduler_name = config["scheduler_name"]
 
     if scheduler_name == "linear":
         end_factor = config['linear'].get('end_factor', 0.1)
         start_factor = config['linear'].get('start_factor', 1)
-        total_iters = config['linear'].get('iterations', 25000)
         scheduler = LinearLR(optimizer, start_factor=start_factor, end_factor=end_factor, total_iters=total_iters)
         logging.info(f"Using LinearLR with start_factor={start_factor}, total_iters={total_iters}, inital_lr={optimizer.defaults['lr']}")
 

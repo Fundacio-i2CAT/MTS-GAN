@@ -7,7 +7,7 @@ data:
   num_channels: 2
   verbose: False
   debug: False
-  val_metric: "jensen_shannon_divergence" # cosine_similarity, jensen_shannon_divergence, fid_score
+  val_score: "jensen_shannon_divergence" # cosine_similarity, jensen_shannon_divergence, fid_score
 
 
 mlflow:

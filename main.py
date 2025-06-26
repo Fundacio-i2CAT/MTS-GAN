@@ -15,6 +15,8 @@ from architecture import discriminator, generator
 import utils.utils as ut
 import utils.optimizer as opt
 import utils.logger_ut as log_ut
+import yaml
+import itertools
 
 logger = logging.getLogger("DataLogger")
 
@@ -32,6 +34,9 @@ def main(args: Namespace):
     with h5py.File(config['data']['dataset_path'], 'r') as f:
         train_data = f['train'][:]
         validation_data = f['val'][:]
+    
+    train_data = train_data[:,:config["data"]["seq_len"],:]
+    validation_data = validation_data[:,:config["data"]["seq_len"],:]
 
     train_set = IdekoDatasetLoader(train_data, norm=config['data']['normalization'])
     validation_set = IdekoDatasetLoader(validation_data, norm=config['data']['normalization'], stats=train_set.stats)

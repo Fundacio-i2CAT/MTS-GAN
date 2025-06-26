@@ -33,8 +33,8 @@ class IdekoDatasetLoader(Dataset):
                 mean, std = self.stats['mean'], self.stats['std']
             else:
                 self.stats = {}
-                mean = x.mean(axis=1, keepdims=True)
-                std = x.std(axis=1, keepdims=True)
+                mean = x.mean(axis=(0,1), keepdims=True)
+                std = x.std(axis=(0,1), keepdims=True)
                 self.stats['mean'], self.stats['std'] = mean, std
             
             return (x - mean) / (std + 1e-8)

@@ -142,10 +142,16 @@ def main(args: Namespace):
                 best_val_metric = computed_metrics["average_"+val_metric]
                 model_not_improved = 0
 
-                if model_not_improved >= config["trainer"]["early_stopping"]:
-                    print(f"Model not improved in {model_not_improved}, stoping training")
-                    # break
-
+               
+            else:
+                model_not_improved += 1
+                logger.info(f"No improvement on the validation metric. Current best: {best_val_metric:.4f}. " +
+                            f"Model not improved for {model_not_improved} epochs.")
+                
+            if model_not_improved >= config["trainer"]["early_stopping"]:
+                print(f"Model not improved in {model_not_improved}, stoping training")
+                break
+            
             del avg_gen_net
 
     if config["mlflow"]["is_used"]:

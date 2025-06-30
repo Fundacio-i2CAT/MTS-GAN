@@ -20,7 +20,32 @@ stages:
 - incremental rollout 100%
 - performance
 - cleanup
+
+
 sast:
   stage: test
+  artifacts:
+    paths:
+    - gl-sast-report.json
 include:
-- template: Auto-DevOps.gitlab-ci.yml
+- template: Jobs/SAST.gitlab-ci.yml
+
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+
+flake8:
+  stage: test
+  script:
+    - pip install -r requirements.txt
+    - pip install flake8
+    - flake8 --ignore E501,E226,W503
+
+pylint:
+  stage: test
+  script:
+    - pip install -r requirements.txt
+    - pip install pylint
+    - pylint **/*.py --fail-under 9.49
+

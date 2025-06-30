@@ -15,6 +15,8 @@ from architecture import discriminator, generator
 import utils.utils as ut
 import utils.optimizer as opt
 import utils.logger_ut as log_ut
+import yaml
+import itertools
 
 logger = logging.getLogger("DataLogger")
 
@@ -32,6 +34,9 @@ def main(args: Namespace):
     with h5py.File(config['data']['dataset_path'], 'r') as f:
         train_data = f['train'][:]
         validation_data = f['val'][:]
+    
+    train_data = train_data[:,:config["data"]["seq_len"],:]
+    validation_data = validation_data[:,:config["data"]["seq_len"],:]
 
     train_set = IdekoDatasetLoader(train_data, norm=config['data']['normalization'])
     validation_set = IdekoDatasetLoader(validation_data, norm=config['data']['normalization'], stats=train_set.stats)
@@ -65,8 +70,8 @@ def main(args: Namespace):
     gen_optimizer = opt.get_optimizer(config, config["trainer"]["g_lr"], gen_net.parameters())
     dis_optimizer = opt.get_optimizer(config, config["trainer"]["d_lr"], dis_net.parameters())
 
-    gen_scheduler = opt.get_scheduler(gen_optimizer, config["trainer"]['scheduler']["g_scheduler"])
-    dis_scheduler = opt.get_scheduler(dis_optimizer, config["trainer"]['scheduler']["d_scheduler"])
+    gen_scheduler = opt.get_scheduler(gen_optimizer, config["trainer"]['scheduler']["g_scheduler"], total_iters=config["trainer"]["epochs"] * len(train_loader))
+    dis_scheduler = opt.get_scheduler(dis_optimizer, config["trainer"]['scheduler']["d_scheduler"], total_iters=config["trainer"]["epochs"] * len(train_loader))
     
     # Exponential Moving Average 
     avg_gen_net = deepcopy(gen_net).cpu()
@@ -137,10 +142,16 @@ def main(args: Namespace):
                 best_val_metric = computed_metrics["average_"+val_metric]
                 model_not_improved = 0
 
-                if model_not_improved >= config["trainer"]["early_stopping"]:
-                    print(f"Model not improved in {model_not_improved}, stoping training")
-                    # break
-
+               
+            else:
+                model_not_improved += 1
+                logger.info(f"No improvement on the validation metric. Current best: {best_val_metric:.4f}. " +
+                            f"Model not improved for {model_not_improved} epochs.")
+                
+            if model_not_improved >= config["trainer"]["early_stopping"]:
+                print(f"Model not improved in {model_not_improved}, stoping training")
+                break
+            
             del avg_gen_net
 
     if config["mlflow"]["is_used"]:

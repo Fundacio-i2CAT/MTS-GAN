@@ -2,19 +2,22 @@ import numpy as np
 from scipy.linalg import sqrtm
 from scipy.spatial.distance import jensenshannon
 from sklearn.metrics.pairwise import cosine_similarity
-from tsfresh.feature_extraction import extract_features, MinimalFCParameters
-
+from tsfresh.feature_extraction import extract_features, MinimalFCParameters 
 import utils.utils as ut
-
+from scipy.spatial.distance import cdist
 
 def compute_fid(real_features, fake_features):
     """Compute the Fréchet Inception Distance (FID) score."""
+
     mu_real = np.mean(real_features, axis=0)
     mu_fake = np.mean(fake_features, axis=0)
     sigma_real = np.cov(real_features, rowvar=False)
     sigma_fake = np.cov(fake_features, rowvar=False)
     
-    cov_sqrt, _ = sqrtm(sigma_real @ sigma_fake, disp=False)
+    product = sigma_real @ sigma_fake
+    eps = 1e-6
+    product += np.eye(product.shape[0]) * eps
+    cov_sqrt, _ = sqrtm(product, disp=False)
     
     if np.iscomplexobj(cov_sqrt):
         cov_sqrt = cov_sqrt.real
@@ -24,24 +27,36 @@ def compute_fid(real_features, fake_features):
 
 
 def average_cosine_similarity(real_signals, synthetic_signals):
- 
+    """Compute the average cosine similarity."""
+
     similarities = cosine_similarity(synthetic_signals, real_signals)
     mean_similarities = np.mean(similarities, axis=1)
     return np.mean(mean_similarities)
 
 
 def average_jensen_shannon_distance(real_signals, synthetic_signals):
+    """Compute the average Jensen-Shannon distance."""
+
+    """
+    real_signals = [normalize_for_jsd(r) for r in real_signals]
     distances = []
     for syn_seq in synthetic_signals:
         syn_seq = normalize_for_jsd(syn_seq)
-        js_per_real = []
-        for real_seq in real_signals:
-            real_seq = normalize_for_jsd(real_seq)
-            js_div = jensenshannon(real_seq, syn_seq)
-            js_per_real.append(js_div)
+        jsd_vals = [jensenshannon(r, syn_seq) for r in real_signals]
+        distances.append(np.mean(jsd_vals))
+    """
+    
+    real_arr = np.array(real_signals)
+    synthetic_arr = np.array(synthetic_signals)
 
-        mean_jsd = np.mean(js_per_real)
-        distances.append(mean_jsd)
+    # Normalize both arrays beforehand
+    real_arr = np.array([normalize_for_jsd(r) for r in real_arr])
+    synthetic_arr = np.array([normalize_for_jsd(s) for s in synthetic_arr])
+
+    # Compute pairwise distances
+    jsd_matrix = cdist(synthetic_arr, real_arr, metric='jensenshannon')
+    distances = np.mean(jsd_matrix, axis=1)
+
     return np.mean(distances)
 
 

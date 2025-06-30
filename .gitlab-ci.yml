@@ -5,6 +5,12 @@
 # Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
 # Note that environment variables can be set in several places
 # See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
+image: python:3.10.16
+
+default:
+  tags:
+    - DAI-runner 
+
 stages:
 - build
 - test
@@ -20,7 +26,32 @@ stages:
 - incremental rollout 100%
 - performance
 - cleanup
+
+
 sast:
   stage: test
+  artifacts:
+    paths:
+    - gl-sast-report.json
 include:
-- template: Auto-DevOps.gitlab-ci.yml
+- template: Jobs/SAST.gitlab-ci.yml
+
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+
+flake8:
+  stage: test
+  script:
+    - pip install -r requirements.txt
+    - pip install flake8
+    - flake8 --ignore E501,E226,W503
+
+pylint:
+  stage: test
+  script:
+    - pip install -r requirements.txt
+    - pip install pylint
+    - pylint **/*.py --fail-under 9.49
+

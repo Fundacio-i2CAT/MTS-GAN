@@ -8,7 +8,7 @@ import os
 
 import utils.metrics as metrics
 import utils.utils as ut
-
+import pandas as pd
 logger = logging.getLogger("DataLogger")
 
 
@@ -40,7 +40,7 @@ def validate(gen_net: torch.nn.Module, validation_loader: data.DataLoader, confi
     generated_data = np.concatenate(fake_samples, axis=0)
     validation_metrics = metrics.compute_metrics(real_data, generated_data)
     [ut.mlflow_log_metric(key, value, step=tracker['validation_global_step'], config=config) for key, value in validation_metrics.items()]
-
+    save_time_series_plot(generated_data, real_data, global_steps, config)
     tracker['validation_global_step'] = global_steps + 1
  
     return validation_metrics
@@ -77,5 +77,36 @@ def gen_plot(gen_net, epoch, config):
     plt.savefig(tmpfile_name, format='jpeg')
     plt.clf()
     ut.mlflow_log_artifact(tmpfile_name, artifact_path="synthetic_signals", config=config)
+    plt.close()
+    os.remove(tmpfile_name)
+
+def save_time_series_plot(array_generated, array_real, epoch, config):
+    os.makedirs("plots", exist_ok=True)
+    
+    df = pd.DataFrame({'time': np.arange(array_generated.shape[1])})
+    
+    for i, val in enumerate([0,-1, array_generated.shape[0]//2]):
+        for feat in range(array_generated.shape[2]):
+            df[f'generated{feat}_{i}'] = array_generated[val][:, feat]
+            df[f'real{feat}_{i}'] = array_real[val][:, feat]
+    
+    fig, axs = plt.subplots(3, 2, figsize=(10, 6))
+
+    for i in range(3):
+        for j, key in enumerate(['generated', 'real']):
+            axs[i, j].set_xlabel('Time')
+            axs[i, j].set_ylabel(key, color='blue')
+            for feat in range(array_generated.shape[2]):
+                axs[i, j].plot(df['time'], df[f'{key}{feat}_{i}'])
+            axs[i, j].tick_params(axis='y', labelcolor='blue')
+
+    temp_filename = f"enc_{epoch}_epoch.png"
+    temp_dir = "/tmp/tmp_extreme_xp/" 
+    tmpfile_name = os.path.join(temp_dir, temp_filename)
+    os.makedirs(temp_dir, exist_ok=True)
+    plt.tight_layout()
+    plt.savefig(tmpfile_name)
+    plt.clf()
+    ut.mlflow_log_artifact(tmpfile_name, artifact_path="gen_v_real_synthetic_signals", config=config)
     plt.close()
     os.remove(tmpfile_name)

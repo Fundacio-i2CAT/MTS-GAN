@@ -3,8 +3,8 @@ data:
   split_proportion: 0.2
   random_seed: 12345
   normalization: "min_max" #None, min_max, standarization
-  seq_len: 300
-  num_channels: 2
+  seq_len: 150
+  num_channels: 3
   verbose: False
   debug: False
   val_score: "jensen_shannon_divergence" # cosine_similarity, jensen_shannon_divergence, fid_score
@@ -12,7 +12,7 @@ data:
 
 mlflow:
   URI: "http://0.0.0.0:5003"
-  experiment_id: "tryout_merge"
+  experiment_id: "unimib_shar_tts"
   is_used: True
  
 trainer:
@@ -23,7 +23,7 @@ trainer:
   n_critic: 1 #total updates discriminator before updating discriminator. the generator is trained each n_critic*g_accumulated_times
   g_accumulated_times: 1 #iterations before optimizing generator
   d_accumulated_times: 1 #iterations before optimizing discriminator
-  early_stopping: 10
+  early_stopping: 5
  
   optimizer:
     optimizer_name: adam #adamw
@@ -62,27 +62,27 @@ trainer:
 
 validator:
   batch_size: 32
-  val_freq: 10
+  val_freq: 20
 
 network:
   generator:
-      seq_len: 300             # Sequence length in the Generator
-      channels: 2               # Output channels (number of features of the time series)
-      patch_size: 2             # Patch size for the Generator
+      seq_len: 150              # Sequence length in the Generator
+      channels: 3               # Output channels (number of features of the time series)
+      patch_size: 16            # Patch size for the Generator
       latent_dim: 100           # Latent dimension (size of input noise vector)
       embed_dim: 10             # Embedding dimension (output of the transformer block)
       depth: 3                  # Depth of the transformer encoder (number of layers)
-      num_heads: 10             # Number of attention heads in each multi-head attention layer
-      forward_drop_rate: 0.2    # Dropout rate in the feedforward network
-      attn_drop_rate: 0.2       # Dropout rate in the attention layer
+      num_heads: 5              # Number of attention heads in each multi-head attention layer
+      forward_drop_rate: 0.5    # Dropout rate in the feedforward network
+      attn_drop_rate: 0.5       # Dropout rate in the attention layer
       ema: 0.99999              # Exponential moving Average decay factor
 
 
   discriminator:
-      in_channels: 2            # Input channels (same as generator)
-      patch_size: 2             # Patch size for the Discriminator
-      emb_size: 100             # Embedding size (dimension of the transformer output)
-      seq_length: 300           # Sequence length for the Discriminator (adjust as necessary)
+      in_channels: 3            # Input channels (same as generator)
+      patch_size: 16            # Patch size for the Discriminator
+      emb_size: 50              # Embedding size (dimension of the transformer output)
+      seq_length: 150           # Sequence length for the Discriminator (adjust as necessary)
       depth: 3                  # Depth of the transformer encoder (number of layers)
       n_classes: 1              # Number of output classes (typically 1 for binary classification: real/fake)
       drop_p: 0.5               # Dropout probability for attention layer

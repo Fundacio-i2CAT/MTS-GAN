@@ -101,12 +101,12 @@ def mlflow_log_summary(gen_net, dis_net, config):
             f.write(str(summary(gen_net, input_size=(1, config["network"]["generator"]['latent_dim']), device='cpu')) + "\n\n")
             f.write("Discriminator Model Summary:\n")
             f.write("=" * 50 + "\n")
-            f.write(str(summary(dis_net, input_size=(1,config["data"]["num_channels"],1, config["data"]["seq_len"]), device='cpu')) + "\n\n")
+            f.write(str(summary(dis_net, input_size=(1, config["data"]["num_channels"], 1, config["data"]["seq_len"]), device='cpu')) + "\n\n")
 
         mlflow_log_artifact(summary_file, None, config)
 
 
-def set_device():#gen_net: nn.Module, dis_net: nn.Module):
+def set_device():  # gen_net: nn.Module, dis_net: nn.Module):
     # TODO add info about choosing GPU
     if not torch.cuda.is_available():
         logger.info('Using CPU, this will be slow')

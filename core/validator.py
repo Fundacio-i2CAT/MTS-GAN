@@ -41,7 +41,7 @@ def validate(gen_net: torch.nn.Module, validation_loader: data.DataLoader, confi
     generated_data = np.concatenate(fake_samples, axis=0)
     validation_metrics = metrics.compute_metrics(real_data, generated_data)
     [ut.mlflow_log_metric(key, value, step=tracker['validation_global_step'], config=config) for key, value in validation_metrics.items()]
-    save_time_series_plot(generated_data, real_data, global_steps, config)
+    save_time_series_plot(generated_data, real_data, tracker['train_global_step'], config)
     tracker['validation_global_step'] = global_steps + 1
 
     return validation_metrics
@@ -109,6 +109,6 @@ def save_time_series_plot(array_generated, array_real, epoch, config):
     plt.tight_layout()
     plt.savefig(tmpfile_name)
     plt.clf()
-    ut.mlflow_log_artifact(tmpfile_name, artifact_path="gen_v_real_synthetic_signals", config=config)
+    ut.mlflow_log_artifact(tmpfile_name, artifact_path="synthetic_vs_real_signals", config=config)
     plt.close()
     os.remove(tmpfile_name)

@@ -109,7 +109,7 @@ def main(args: Namespace):
         # Validtion and checkpoitn saving
         if epoch % config["validator"]["val_freq"] == 0:
             computed_metrics = validator.validate(gen_net, validation_loader, config, tracker, device)
-            validator.gen_plot(gen_net, epoch, config)
+            #validator.gen_plot(gen_net, epoch, config)
 
             avg_gen_net = deepcopy(gen_net)
             ut.load_params(avg_gen_net, gen_avg_param, args)

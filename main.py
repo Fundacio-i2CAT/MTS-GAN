@@ -42,8 +42,9 @@ def main(args: Namespace):
     validation_set = IdekoDatasetLoader(validation_data, norm=config['data']['normalization'], stats=train_set.stats)
 
     def add_extra_dim(batch):
+
         # Transpose to (num_samples, num_channels, max_rows)
-        batch = np.transpose(batch, (0, 2, 1))  
+        batch = np.transpose(batch, (0, 2, 1))
         # Reshape to (num_samples, num_channels, 1, seq_len)
         batch = batch.reshape(batch.shape[0], config["data"]["num_channels"], 1, config["data"]["seq_len"])
         batch = torch.from_numpy(batch).float()  

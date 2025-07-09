@@ -51,14 +51,14 @@ class ClassificationHead(nn.Sequential):
 
     
 class PatchEmbedding_Linear(nn.Module):
-    #what are the proper parameters set here?
-    def __init__(self, in_channels = 21, patch_size = 16, emb_size = 100, seq_length = 1024):
+    #  what are the proper parameters set here?
+    def __init__(self, in_channels=21, patch_size=16, emb_size=100, seq_length=1024):
         # self.patch_size = patch_size
         super().__init__()
-        #change the conv2d parameters here
+        #  change the conv2d parameters here
         self.projection = nn.Sequential(
-            Rearrange('b c (h s1) (w s2) -> b (h w) (s1 s2 c)',s1 = 1, s2 = patch_size),
-            nn.Linear(patch_size*in_channels, emb_size)
+            Rearrange('b c (h s1) (w s2) -> b (h w) (s1 s2 c)', s1=1, s2=patch_size),
+            nn.Linear(patch_size * in_channels, emb_size)
         )
         self.cls_token = nn.Parameter(torch.randn(1, 1, emb_size))
         self.positions = nn.Parameter(torch.randn((seq_length // patch_size) + 1, emb_size))

@@ -5,6 +5,7 @@
 # Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
 # Note that environment variables can be set in several places
 # See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
+
 image: python:3.10.16
 
 default:
@@ -46,7 +47,7 @@ flake8:
   script:
     - pip install -r requirements.txt
     - pip install flake8
-    - flake8 --ignore E501,E226,W503
+    - flake8 --ignore E501
 
 pylint:
   stage: test

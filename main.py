@@ -34,16 +34,17 @@ def main(args: Namespace):
     with h5py.File(config['data']['dataset_path'], 'r') as f:
         train_data = f['train'][:]
         validation_data = f['val'][:]
-    
-    train_data = train_data[:,:config["data"]["seq_len"],:]
-    validation_data = validation_data[:,:config["data"]["seq_len"],:]
+
+    train_data = train_data[:, :config["data"]["seq_len"], :]
+    validation_data = validation_data[:, :config["data"]["seq_len"], :]
 
     train_set = IdekoDatasetLoader(train_data, norm=config['data']['normalization'])
     validation_set = IdekoDatasetLoader(validation_data, norm=config['data']['normalization'], stats=train_set.stats)
-    
+
     def add_extra_dim(batch):
+
         # Transpose to (num_samples, num_channels, max_rows)
-        batch = np.transpose(batch, (0, 2, 1))  
+        batch = np.transpose(batch, (0, 2, 1))
         # Reshape to (num_samples, num_channels, 1, seq_len)
         batch = batch.reshape(batch.shape[0], config["data"]["num_channels"], 1, config["data"]["seq_len"])
         batch = torch.from_numpy(batch).float()  
@@ -108,7 +109,7 @@ def main(args: Namespace):
         # Validtion and checkpoitn saving
         if epoch % config["validator"]["val_freq"] == 0:
             computed_metrics = validator.validate(gen_net, validation_loader, config, tracker, device)
-            validator.gen_plot(gen_net, epoch, config)
+            #validator.gen_plot(gen_net, epoch, config)
 
             avg_gen_net = deepcopy(gen_net)
             ut.load_params(avg_gen_net, gen_avg_param, args)

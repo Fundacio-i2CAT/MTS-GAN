@@ -10,7 +10,7 @@ from copy import deepcopy
 import numpy as np
 import core.trainer as trainer
 import core.validator as validator
-from data.dataLoader import IdekoDatasetLoader
+from data.dataLoader import CustomDataset
 from architecture import discriminator, generator
 import utils.utils as ut
 import utils.optimizer as opt

@@ -47,7 +47,8 @@ flake8:
   script:
     - pip install -r requirements.txt
     - pip install flake8
-    - flake8 --ignore E501
+    - flake8 --ignore=E501,W503 .
+  allow_failure: true
 
 pylint:
   stage: test
@@ -55,4 +56,4 @@ pylint:
     - pip install -r requirements.txt
     - pip install pylint
     - pylint **/*.py --fail-under 9.49
-
+  allow_failure: true

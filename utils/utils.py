@@ -188,3 +188,16 @@ def load_params(model, new_param, args, mode="gpu"):
     else:
         for p, new_p in zip(model.parameters(), new_param):
             p.data.copy_(new_p)
+
+def set_validation_metric(val_metric: str) -> float:
+    logger.info(f"Validation metric used: {val_metric}")
+
+    if val_metric in ["fid_score_statistic", "jensen_shannon_divergence"]:
+        return float("inf")
+    elif val_metric == "cosine_similarity":
+        return float("-inf")
+    else:
+        raise ValueError(
+            f"Validation metric '{val_metric}' not supported. Choose from "
+            "'fid_score_statistic', 'jensen_shannon_divergence', or 'cosine_similarity'."
+        )

@@ -34,19 +34,19 @@ def main(args: Namespace):
     with h5py.File(config['data']['dataset_path'], 'r') as f:
         train_data = f['train'][:]
         validation_data = f['val'][:]
-    
-    train_data = train_data[:,:config["data"]["seq_len"],:]
-    validation_data = validation_data[:,:config["data"]["seq_len"],:]
+
+    train_data = train_data[:, :config["data"]["seq_len"], :]
+    validation_data = validation_data[:, :config["data"]["seq_len"], :]
 
     train_set = CustomDataset(train_data, norm=config['data']['normalization'])
     validation_set = CustomDataset(validation_data, norm=config['data']['normalization'], stats=train_set.stats)
-    
+
     def add_extra_dim(batch):
         # Transpose to (num_samples, num_channels, max_rows)
-        batch = np.transpose(batch, (0, 2, 1))  
+        batch = np.transpose(batch, (0, 2, 1))
         # Reshape to (num_samples, num_channels, 1, seq_len)
         batch = batch.reshape(batch.shape[0], config["data"]["num_channels"], 1, config["data"]["seq_len"])
-        batch = torch.from_numpy(batch).float()  
+        batch = torch.from_numpy(batch).float()
         return batch
 
     train_loader = data.DataLoader(train_set, batch_size=config["trainer"]["batch_size"], shuffle=True, collate_fn=add_extra_dim)
@@ -62,7 +62,7 @@ def main(args: Namespace):
 
     gen_net.to(device)
     dis_net.to(device)
-    
+
     gen_net.apply(lambda m: ut.weights_init(config["network"]["init_type"], m))
     dis_net.apply(lambda m: ut.weights_init(config["network"]["init_type"], m))
 
@@ -72,7 +72,7 @@ def main(args: Namespace):
 
     gen_scheduler = opt.get_scheduler(gen_optimizer, config["trainer"]['scheduler']["g_scheduler"], total_iters=config["trainer"]["epochs"] * len(train_loader))
     dis_scheduler = opt.get_scheduler(dis_optimizer, config["trainer"]['scheduler']["d_scheduler"], total_iters=config["trainer"]["epochs"] * len(train_loader))
-    
+
     # Exponential Moving Average 
     avg_gen_net = deepcopy(gen_net).cpu()
     gen_avg_param = ut.copy_params(avg_gen_net)
@@ -90,19 +90,19 @@ def main(args: Namespace):
     best_js_div_st = float("inf")
     best_cosine_alignment_st = float("-inf")
     best_cosine_alignment = float("-inf")
-    
+
     logger.info(f"Validation metric used: {val_metric}")
     tracker = {"train_global_step": start_epoch,
                "validation_global_step": val_start_epoch,
                "end_epoch": end_epoch}
-    
+
     for epoch in range(int(start_epoch), int(end_epoch)):
         tracker["curr_epoch"] = epoch
         trainer.train(gen_net, dis_net, train_loader,
                       gen_optimizer, dis_optimizer,
                       gen_scheduler, dis_scheduler, config, tracker, device,
                       gen_avg_param)
-        
+
         # Validtion and checkpoitn saving
         if epoch % config["validator"]["val_freq"] == 0:
             computed_metrics = validator.validate(gen_net, validation_loader, config, tracker, device)
@@ -110,7 +110,7 @@ def main(args: Namespace):
 
             avg_gen_net = deepcopy(gen_net)
             ut.load_params(avg_gen_net, gen_avg_param, args)
-           
+
             fid_score_st = computed_metrics["average_fid_score_statistic"]
             js_div_st = computed_metrics["average_jensen_shannon_divergence_statistic"]
             cosine_sim_st = computed_metrics["average_cosine_similarity_statistic"]
@@ -164,9 +164,12 @@ def main(args: Namespace):
         ut.mlflow_log_metric("best_cosine_similarity", best_cosine_alignment, None, config)
         mlflow.end_run()
 
+    return best_jensen_shannon_divergence
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+
     parser.add_argument("--config", type=str, default="config.yaml",
                         help="Path to YAML config file")
     args = parser.parse_args()

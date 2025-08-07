@@ -1,10 +1,10 @@
 data:
-  dataset_path: "/data/datasets_ori/ideko/not_anomalous_3periods_10subsampling_1800seqLen.h5" #"/data/ideko/raw_data_splited/raw_data_subsampled_20/not_anomalous"
+  dataset_path: "/data/datasets_ori/unimib-shar/Running.h5" #"/data/datasets_ori/ideko/not_anomalous_3periods_10subsampling_1800seqLen.h5" #"/data/ideko/raw_data_splited/raw_data_subsampled_20/not_anomalous"
   split_proportion: 0.2
   random_seed: 12345
-  normalization: "min_max" #None, min_max, standarization
-  seq_len: 1800
-  num_channels: 2
+  normalization: "global_min_max" #None, min_max, standarization
+  seq_len: 150
+  num_channels: 3
   verbose: False
   debug: False
   val_score: "jensen_shannon_divergence" # cosine_similarity, jensen_shannon_divergence, fid_score
@@ -12,18 +12,18 @@ data:
 
 mlflow:
   URI: "http://0.0.0.0:5003"
-  experiment_id: "unimib_shar_tts"
+  experiment_id: "running_tts"
   is_used: True
  
 trainer:
-  batch_size: 16
+  batch_size: 32
   epochs: 500  #500
-  g_lr: 0.0001
-  d_lr: 0.00005
+  g_lr: 0.0003
+  d_lr: 0.0001
   n_critic: 1 #total updates discriminator before updating discriminator. the generator is trained each n_critic*g_accumulated_times
   g_accumulated_times: 1 #iterations before optimizing generator
   d_accumulated_times: 1 #iterations before optimizing discriminator
-  early_stopping: 5
+  early_stopping: 15
  
   optimizer:
     optimizer_name: adam #adamw
@@ -36,7 +36,7 @@ trainer:
   scheduler:
     
     g_scheduler:
-      scheduler_name: linear #linear, constant,exponential
+      scheduler_name: constant #linear, constant,exponential
       exponential:
         gamma: 0.999
       linear:
@@ -45,7 +45,7 @@ trainer:
 
     #linear, constant
     d_scheduler:
-      scheduler_name: linear #linear, constant,exponential
+      scheduler_name: constant #linear, constant,exponential
       exponential:
         emma: 0.999
       linear:
@@ -66,9 +66,9 @@ validator:
 
 network:
   generator:
-      seq_len: 1800              # Sequence length in the Generator
-      channels: 2               # Output channels (number of features of the time series)
-      patch_size: 15            # Patch size for the Generator
+      seq_len: 150              # Sequence length in the Generator
+      channels: 3               # Output channels (number of features of the time series)
+      patch_size: 2            # Patch size for the Generator
       latent_dim: 100           # Latent dimension (size of input noise vector)
       embed_dim: 10             # Embedding dimension (output of the transformer block)
       depth: 3                  # Depth of the transformer encoder (number of layers)
@@ -79,8 +79,8 @@ network:
 
 
   discriminator:
-      in_channels: 2            # Input channels (same as generator)
-      patch_size: 15            # Patch size for the Discriminator
+      in_channels: 3            # Input channels (same as generator)
+      patch_size: 2            # Patch size for the Discriminator
       emb_size: 50              # Embedding size (dimension of the transformer output)
       seq_length: 1800           # Sequence length for the Discriminator (adjust as necessary)
       depth: 3                  # Depth of the transformer encoder (number of layers)

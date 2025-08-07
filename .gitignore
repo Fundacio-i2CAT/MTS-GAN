@@ -1,1 +1,4 @@
 **/__pycache__/*
+/plots/*
+/best_configs/*
+gridsearch.yaml

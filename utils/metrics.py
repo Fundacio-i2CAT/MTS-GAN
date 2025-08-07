@@ -1,33 +1,50 @@
 import numpy as np
 from scipy.linalg import sqrtm
-from scipy.spatial.distance import jensenshannon
 from sklearn.metrics.pairwise import cosine_similarity
-from tsfresh.feature_extraction import extract_features, MinimalFCParameters 
-import utils.utils as ut
 from scipy.spatial.distance import cdist
+from tsfresh.feature_extraction import extract_features, MinimalFCParameters
+from sklearn.metrics import mean_squared_error
 
-def compute_fid(real_features, fake_features):
+import utils.utils as ut
+
+
+def compute_mse(real_data, recovered_data) -> dict:
+    metrics = {}
+
+    n_samples = real_data.shape[0]
+    mse_per_series = []
+
+    for i in range(n_samples):
+        real_ts = real_data[i]           
+        rec_ts = recovered_data[i]        
+
+        mse = mean_squared_error(real_ts, rec_ts)   
+        mse_per_series.append(mse)
+
+    avg_mse = np.mean(mse_per_series)
+
+    metrics['avg_mse'] = avg_mse
+
+    return metrics
+
+
+def average_fid_score(real_features, fake_features):
     """Compute the Fréchet Inception Distance (FID) score."""
-
     mu_real = np.mean(real_features, axis=0)
     mu_fake = np.mean(fake_features, axis=0)
     sigma_real = np.cov(real_features, rowvar=False)
     sigma_fake = np.cov(fake_features, rowvar=False)
-    
-    product = sigma_real @ sigma_fake
-    eps = 1e-6
-    product += np.eye(product.shape[0]) * eps
-    cov_sqrt, _ = sqrtm(product, disp=False)
-    
+
+    cov_sqrt, _ = sqrtm(sigma_real @ sigma_fake, disp=False)
+
     if np.iscomplexobj(cov_sqrt):
         cov_sqrt = cov_sqrt.real
-    
+
     fid = np.sum((mu_real - mu_fake)**2) + np.trace(sigma_real + sigma_fake - 2 * cov_sqrt)
-    return fid
+    return np.mean(fid)
 
 
 def average_cosine_similarity(real_signals, synthetic_signals):
-    """Compute the average cosine similarity."""
 
     similarities = cosine_similarity(synthetic_signals, real_signals)
     mean_similarities = np.mean(similarities, axis=1)
@@ -35,17 +52,6 @@ def average_cosine_similarity(real_signals, synthetic_signals):
 
 
 def average_jensen_shannon_distance(real_signals, synthetic_signals):
-    """Compute the average Jensen-Shannon distance."""
-
-    """
-    real_signals = [normalize_for_jsd(r) for r in real_signals]
-    distances = []
-    for syn_seq in synthetic_signals:
-        syn_seq = normalize_for_jsd(syn_seq)
-        jsd_vals = [jensenshannon(r, syn_seq) for r in real_signals]
-        distances.append(np.mean(jsd_vals))
-    """
-    
     real_arr = np.array(real_signals)
     synthetic_arr = np.array(synthetic_signals)
 
@@ -62,14 +68,20 @@ def average_jensen_shannon_distance(real_signals, synthetic_signals):
 
 def normalize_for_jsd(seq):
     """For jensen shannon values must be non negative and normalized."""
-    seq = seq - np.min(seq) if np.min(seq) < 0 else seq   
-    seq = seq + 1e-8   
-    return seq / np.sum(seq)   
+    seq = seq - np.min(seq) if np.min(seq) < 0 else seq
+    seq = seq + 1e-8
+    return seq / np.sum(seq)
 
 
-def average_fid_score(real_signals, synthetic_signals):
- 
-    tsfresh_settings = MinimalFCParameters()
+def compute_statistic_metrics(real_signals, synthetic_signals):
+    # Metrics to computed with statistics extracted from each signal
+    tsfresh_settings = {"median": None,
+                        "mean": None,
+                        "standard_deviation": None,
+                        "variance": None,
+                        "root_mean_square": None,
+                        "maximum": None,
+                        "minimum": None}
 
     real_feature_df = ut.convert_to_tsfresh_format(real_signals)
     synthetic_feature_df = ut.convert_to_tsfresh_format(synthetic_signals)
@@ -83,9 +95,11 @@ def average_fid_score(real_signals, synthetic_signals):
         default_fc_parameters=tsfresh_settings, disable_progressbar=True
     )
 
-    fid_score = compute_fid(real_features.values, synthetic_features.values)
-     
-    return np.mean(fid_score)
+    metrics = {"fid_statistic": average_fid_score(real_features.values, synthetic_features.values),
+               "jensen_shannon_statistic": average_jensen_shannon_distance(real_features.values, synthetic_features.values),
+               "cosine_similarity_statistic": average_cosine_similarity(real_features.values, synthetic_features.values)}
+
+    return metrics
 
 
 def compute_metrics(real_data, synthetic_data):
@@ -95,23 +109,29 @@ def compute_metrics(real_data, synthetic_data):
     metrics = {}
     avg_cosine_list = []
     avg_js_list = []
-    avg_fid_list = []
+    avg_fid_statistic_list = []
+    avg_cosine_statistic_list = []
+    avg_js_statistic_list = []
 
     # feature level
     for i in range(real_data.shape[2]):
         cosine_sim = average_cosine_similarity(real_data[:, :, i], synthetic_data[:, :, i])
         js_div = average_jensen_shannon_distance(real_data[:, :, i], synthetic_data[:, :, i])
-        fid = average_fid_score(real_data[:, :, i], synthetic_data[:, :, i])
-        
+        statistic_metrics = compute_statistic_metrics(real_data[:, :, i], synthetic_data[:, :, i])
+
         metrics[f"feature_{i + 1}"] = {
-            "average_cosine_similarity": cosine_sim,
+            "cosine_similarity": cosine_sim,
             "jensen_shannon_divergence": js_div,
-            "fid_score": fid
+            "fid_score_statistic": statistic_metrics["fid_statistic"],
+            "cosine_similarity_statistic": statistic_metrics["cosine_similarity_statistic"],
+            "jenssen_shannon_statistic_statistic": statistic_metrics["jensen_shannon_statistic"]
         }
 
         avg_cosine_list.append(cosine_sim)
         avg_js_list.append(js_div)
-        avg_fid_list.append(fid)
+        avg_fid_statistic_list.append(statistic_metrics["fid_statistic"])
+        avg_cosine_statistic_list.append(statistic_metrics["cosine_similarity_statistic"])
+        avg_js_statistic_list.append(statistic_metrics["jensen_shannon_statistic"])
 
     # Flatten dictionary
     m = {f"{feature}_{metric}": value for feature, values in metrics.items() for metric, value in values.items()}
@@ -120,7 +140,10 @@ def compute_metrics(real_data, synthetic_data):
     m.update({
         "average_cosine_similarity": np.mean(avg_cosine_list),
         "average_jensen_shannon_divergence": np.mean(avg_js_list),
-        "average_fid_score": np.mean(avg_fid_list)
+        "average_fid_score_statistic": np.mean(avg_fid_statistic_list),
+        "average_cosine_similarity_statistic": np.mean(avg_cosine_statistic_list),
+        "average_jensen_shannon_divergence_statistic": np.mean(avg_js_statistic_list)
+
     })
 
     return m

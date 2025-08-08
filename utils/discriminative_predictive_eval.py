@@ -50,7 +50,8 @@ def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0
         train_set = CustomDataset(train_data, norm=config['data']['normalization'])
         validation_set = CustomDataset(validation_data, norm=config['data']['normalization'], stats=train_set.stats)
         test_set = CustomDataset(test_data, norm=config['data']['normalization'], stats=train_set.stats)
-
+        
+        train = np.array([train_set[i] for i in range(len(train_set))])
         validation = np.array([validation_set[i] for i in range(len(validation_set))])
         test = np.array([test_set[i] for i in range(len(test_set))])
 
@@ -71,9 +72,13 @@ def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0
         ut.mlflow_log_metric("p_mse_baseline", baseline_mse, None, config)
 
         acc, discriminative_score = disc.discriminative_score_metrics(validation, test, np.concatenate((syn_samples, extra_samples), axis=0), device)
+        acc_baseline, discriminative_score_baseline = disc.discriminative_score_metrics(validation, test, train, device)
 
         ut.mlflow_log_metric("d_score", discriminative_score, None, config)
         ut.mlflow_log_metric("d_acc", acc, None, config)
+
+        ut.mlflow_log_metric("d_score_baseline", discriminative_score_baseline, None, config)
+        ut.mlflow_log_metric("d_acc_baseline", acc_baseline, None, config)
 
         metrics['p_mse'].append(mse)
         metrics['p_mse_baseline'].append(baseline_mse)
@@ -104,4 +109,4 @@ if __name__ == "__main__":
          "a12b83bdfab242e7b82e6ef5c6dc8529",  # mechanical
          ]
     for i in a:
-        discriminative_predictive_evaluation(run_id=i)
+        discriminative_predictive_evaluation(n_repetitions=5, run_id=i)

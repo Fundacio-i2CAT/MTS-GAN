@@ -91,6 +91,11 @@ def mlflow_log_params(params: dict, config: dict):
         mlflow.log_params(params)
 
 
+def mlflow_log_param(param: str, value: float, step, config: dict):
+    if config["mlflow"]["is_used"]:
+        mlflow.log_param(param, value, step)
+
+
 def mlflow_log_summary(gen_net, dis_net, config):
     if config["mlflow"]["is_used"]:
         summary_file = "model_summaries.txt"

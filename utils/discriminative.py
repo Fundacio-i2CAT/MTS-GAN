@@ -23,11 +23,11 @@ class LSTMModelDiscriminator(nn.Module):
         return out
 
 
-def discriminative_score_metrics(real_data, generated_data, device):
+def discriminative_score_metrics(real_data_val, real_data_test, generated_data, device):
     """Binary classification"""
 
     # Network parameters
-    input_dim = real_data.shape[2]
+    input_dim = real_data_val.shape[2]
     num_layers = 2
     hidden_dim = 4
     iterations = 5000
@@ -40,22 +40,28 @@ def discriminative_score_metrics(real_data, generated_data, device):
     generated_x = torch.tensor(generated_data, dtype=torch.float32)
     generated_y = torch.zeros(len(generated_data))
 
-    real_x = torch.tensor(real_data, dtype=torch.float32)
-    real_y = torch.ones(len(real_data))
+    first_half_x = generated_x[:len(real_data_val)]
+    first_half_y = generated_y[:len(real_data_val)]
 
-    combined_x = torch.cat((generated_x, real_x), dim=0).numpy()
-    combined_y = torch.cat((generated_y, real_y), dim=0).numpy()
+    second_half_x = generated_x[len(real_data_val):len(real_data_val) + len(real_data_test)]
+    second_half_y = generated_y[len(real_data_val):len(real_data_val) + len(real_data_test)]
 
-    train_x, test_x, train_y, test_y = train_test_split(
-        combined_x,
-        combined_y,
-        test_size=0.2,
-        shuffle=True
-    )
-    train_x = torch.tensor(train_x, dtype=torch.float32).to(device)
-    train_y = torch.tensor(train_y, dtype=torch.float32).to(device)
-    test_x = torch.tensor(test_x, dtype=torch.float32).to(device)
-    test_y = torch.tensor(test_y, dtype=torch.float32).to(device)
+    real_x = torch.tensor(real_data_val, dtype=torch.float32)
+    real_y = torch.ones(len(real_data_val))
+
+    test_real_x = torch.tensor(real_data_test, dtype=torch.float32)
+    test_real_y = torch.ones(len(real_data_test))
+    
+    combined_x = torch.cat((first_half_x, real_x), dim=0).numpy()
+    combined_y = torch.cat((first_half_y, real_y), dim=0).numpy()
+
+    test_combined_x = torch.cat((second_half_x, test_real_x), dim=0).numpy()
+    test_combined_y = torch.cat((second_half_y, test_real_y), dim=0).numpy()
+
+    train_x = torch.tensor(combined_x, dtype=torch.float32).to(device)
+    train_y = torch.tensor(combined_y, dtype=torch.float32).to(device)
+    test_x = torch.tensor(test_combined_x, dtype=torch.float32).to(device)
+    test_y = torch.tensor(test_combined_y, dtype=torch.float32).to(device)
 
     train_dataset = TensorDataset(train_x, train_y)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -101,12 +107,14 @@ def discriminative_score_metrics(real_data, generated_data, device):
 
 if __name__ == '__main__':
 
-    real_data = np.random.rand(10, 300, 2)
+    real_data_val = np.random.rand(10, 300, 2)
+    real_data_test = np.random.rand(10, 300, 2)
+
     generated_data = np.random.rand(10, 300, 2)
 
     # Choose device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Run the metrics calculation
-    disc_score = discriminative_score_metrics(real_data, generated_data, device)
+    disc_score = discriminative_score_metrics(real_data_val, real_data_test, generated_data, device)
     print(f"acc, disc_score: {disc_score}")

@@ -155,7 +155,12 @@ def main(args: Namespace):
                 break
 
             del avg_gen_net
-
+    ut.mlflow_save_checkpoint({'epoch': "last",
+                                        'gen_state_dict': gen_net.state_dict(),
+                                        'dis_state_dict': dis_net.state_dict(),
+                                        'gen_optimizer': gen_optimizer.state_dict(),
+                                        'dis_optimizer': dis_optimizer.state_dict(),
+                                        'model_config': config["network"]}, config=config)
     if config["mlflow"]["is_used"]:
         ut.mlflow_log_metric("best_fid_score_st", best_fid_score_st, None, config)
         ut.mlflow_log_metric("best_cosine_similarity_st", best_cosine_alignment_st, None, config)

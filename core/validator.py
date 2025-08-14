@@ -44,6 +44,9 @@ def validate(gen_net: torch.nn.Module, validation_loader: data.DataLoader, confi
         if "feature" not in key:
             ut.mlflow_log_metric(key, value, step=tracker['validation_global_step'], config=config)
     save_time_series_plot(generated_data, real_data, tracker['train_global_step'], config)
+    
+    ut.mlflow_save_binary(generated_data, tracker['curr_epoch'], config)
+
     tracker['validation_global_step'] = global_steps + 1
 
     return validation_metrics

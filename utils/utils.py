@@ -9,7 +9,8 @@ import logging
 import pandas as pd
 from torchinfo import summary
 from copy import deepcopy
-
+import tempfile
+import shutil
 
 logger = logging.getLogger("DataLogger")
 
@@ -24,6 +25,20 @@ def mlflow_save_checkpoint(states, config):
         os.remove(tmpfile_name)
         logger.info("Model looged in MLFLOW")
     
+
+def mlflow_save_binary(validation: np.ndarray, epoch: str, config: dict):
+    if config["mlflow"]["is_used"]:
+        temp_filename = f"{epoch}_validation_binary.npy"
+        temp_dir = tempfile.mkdtemp(prefix="extreme_xp_")
+
+        tmpfile_path = os.path.join(temp_dir, temp_filename)
+        os.makedirs(temp_dir, exist_ok=True)
+        np.save(tmpfile_path, validation, allow_pickle=False)
+        mlflow.log_artifact(tmpfile_path, artifact_path="samples_binary")
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+        logger.info("Validation array logged in MLflow as NumPy binary.")
+
 
 def load_yaml(file_path: str) -> dict:
  

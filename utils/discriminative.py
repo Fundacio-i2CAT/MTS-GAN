@@ -43,8 +43,8 @@ def discriminative_score_metrics(real_data_val, real_data_test, generated_data, 
     first_half_x = generated_x[:len(real_data_val)]
     first_half_y = generated_y[:len(real_data_val)]
 
-    second_half_x = generated_x[len(real_data_val):len(real_data_test)]
-    second_half_y = generated_y[len(real_data_val):len(real_data_test)]
+    second_half_x = generated_x[len(real_data_val):len(real_data_val) + len(real_data_test)]
+    second_half_y = generated_y[len(real_data_val):len(real_data_val) + len(real_data_test)]
 
     real_x = torch.tensor(real_data_val, dtype=torch.float32)
     real_y = torch.ones(len(real_data_val))

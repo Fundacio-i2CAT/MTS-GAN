@@ -84,19 +84,20 @@ def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0
         metrics['p_mse_baseline'].append(baseline_mse)
         metrics['d_score'].append(discriminative_score)
         metrics['d_acc'].append(acc)
-        metrics['d_score_baseline'].append(0)
-        metrics['d_acc_baseline'].append(0)
+        metrics['d_score_baseline'].append(discriminative_score_baseline)
+        metrics['d_acc_baseline'].append(acc_baseline)
 
         print("Trained on real data: ", baseline_mse, "\n Trained on synthetic data:", mse)
 
         print("Discriminative accuracy: ", acc, "\n Discriminative score: ", discriminative_score)
         mlflow.end_run()
-    _ = [ut.mlflow_log_metric(key, np.mean(value), None, config) for key, value in metrics.items()]
+    a = [ut.mlflow_log_metric(key, np.mean(value), None, config) for key, value in metrics.items()]
     mlflow.end_run()
 
 
 if __name__ == "__main__":
-    a = ["06952188de164d3db1f879ba7ebe8e0d",  # Jumping
+    a = [ "a12b83bdfab242e7b82e6ef5c6dc8529",  # mechanical,
+         "06952188de164d3db1f879ba7ebe8e0d",  # Jumping
          "d9d1181b9ec54bb7bf6ac3eb0eb2d8f5",  # running
          "f54f5e3931624f879f98c328f0c01de0",  # ETTh2_720
          "0714d344d09e489e80a4b5683dea9452",  # ETTh2_336
@@ -106,7 +107,7 @@ if __name__ == "__main__":
          "ea315c63cea944adb359dbfc3cb129ad",  # ETTh1_96
          "f1bc0bef91394a86af291387a102a53a",  # not_anomalous
          "2b11c47ae3944acca1d9c77bc0fb6161",  # electrical
-         "a12b83bdfab242e7b82e6ef5c6dc8529",  # mechanical
+        
          ]
     for i in a:
         discriminative_predictive_evaluation(n_repetitions=5, run_id=i)

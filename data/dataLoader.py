@@ -39,23 +39,7 @@ class CustomDataset(Dataset):
 
             x = (x - min_val) / (max_val - min_val + 1e-8)
             return x
-        if norm == 'capped_global_min_max':
-            if self.stats is not None:
-                min_val, max_val = self.stats['min'], self.stats['max']
-            else:
-                self.stats = {}
-                min_val = x.min(axis=(0, 1))  # shape (2,)
-                max_val = x.max(axis=(0, 1))
 
-                if min_val[1] < -10:
-                    min_val[1] = -10
-                if max_val[1] > 10:
-                    max_val[1] = 10
-
-                self.stats['min'], self.stats['max'] = min_val, max_val
-
-            x = (x - min_val) / (max_val - min_val + 1e-8)
-            return x
         if norm == 'standarization':
             if self.stats is not None:
                 mean, std = self.stats['mean'], self.stats['std']

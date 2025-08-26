@@ -11,7 +11,7 @@ import mlflow
 import os
 
 
-def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0.0.0.0:5003', run_id="f1bc0bef91394a86af291387a102a53a"):
+def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0.0.0.0:5003', run_id="f1bc0bef91394a86af291387a102a53a", epoch=-1):
     """
     Gets config from artifacts in mlflow, reads real data from dataset in config,
     generates synthetic data and computes predictive and discriminative metrics.
@@ -22,17 +22,14 @@ def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0
                     "is_used": True,
                     "run_name": "ib-sh"
                     })
-    syn_generator = Synthetic_Generator(run_id=run_id, tracking_uri=tracking_uri)
+    syn_generator = Synthetic_Generator(run_id=run_id, tracking_uri=tracking_uri, epoch=epoch)
 
     config = ut.load_yaml(syn_generator.config)
     ut.mlflow_log_param("model", "tts", None, config)
     ut.mlflow_log_param("dataset", os.path.basename(config['data']['dataset_path']), None, config)
     metrics = {"p_mse": [],
-               "p_mse_baseline": [],
                "d_score": [],
                "d_acc": [],
-               "d_score_baseline": [],
-               "d_acc_baseline": []
                }
 
     for i in range(n_repetitions):
@@ -66,28 +63,28 @@ def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         mse = pred.predictive_score_metrics(test, syn_samples, device)
-        baseline_mse = pred.predictive_score_metrics(test, validation, device)
+        #baseline_mse = pred.predictive_score_metrics(test, validation, device)
 
         ut.mlflow_log_metric("p_mse", mse, None, config)
-        ut.mlflow_log_metric("p_mse_baseline", baseline_mse, None, config)
+        #ut.mlflow_log_metric("p_mse_baseline", baseline_mse, None, config)
 
         acc, discriminative_score = disc.discriminative_score_metrics(validation, test, np.concatenate((syn_samples, extra_samples), axis=0), device)
-        acc_baseline, discriminative_score_baseline = disc.discriminative_score_metrics(validation, test, train, device)
+        #acc_baseline, discriminative_score_baseline = disc.discriminative_score_metrics(validation, test, train, device)
 
         ut.mlflow_log_metric("d_score", discriminative_score, None, config)
         ut.mlflow_log_metric("d_acc", acc, None, config)
 
-        ut.mlflow_log_metric("d_score_baseline", discriminative_score_baseline, None, config)
-        ut.mlflow_log_metric("d_acc_baseline", acc_baseline, None, config)
+        #ut.mlflow_log_metric("d_score_baseline", discriminative_score_baseline, None, config)
+        #ut.mlflow_log_metric("d_acc_baseline", acc_baseline, None, config)
 
         metrics['p_mse'].append(mse)
-        metrics['p_mse_baseline'].append(baseline_mse)
+        #metrics['p_mse_baseline'].append(baseline_mse)
         metrics['d_score'].append(discriminative_score)
         metrics['d_acc'].append(acc)
-        metrics['d_score_baseline'].append(discriminative_score_baseline)
-        metrics['d_acc_baseline'].append(acc_baseline)
+        #metrics['d_score_baseline'].append(discriminative_score_baseline)
+        #metrics['d_acc_baseline'].append(acc_baseline)
 
-        print("Trained on real data: ", baseline_mse, "\n Trained on synthetic data:", mse)
+        #print("Trained on real data: ", baseline_mse, "\n Trained on synthetic data:", mse)
 
         print("Discriminative accuracy: ", acc, "\n Discriminative score: ", discriminative_score)
         mlflow.end_run()
@@ -109,5 +106,12 @@ if __name__ == "__main__":
          "2b11c47ae3944acca1d9c77bc0fb6161",  # electrical
         
          ]
-    for i in a:
-        discriminative_predictive_evaluation(n_repetitions=5, run_id=i)
+    
+    b = [
+    #("e838a4cf81084a57961ac30cca876aa5", 1000),
+    #("bc42de0074364b2e90deb381ee869230", 1000)
+    ("a49ca901d0974c1e8f63140d640b20ce", 420),
+    ]
+    
+    for i,e in b:
+        discriminative_predictive_evaluation(n_repetitions=5, run_id=i, epoch=e)

@@ -16,14 +16,15 @@ from torch.utils import data
 class Synthetic_Generator(Dataset):
     def __init__(self,
                  run_id='f1bc0bef91394a86af291387a102a53a',
-                 tracking_uri='http://0.0.0.0:5003'
+                 tracking_uri='http://0.0.0.0:5003',
+                 epoch=-1
                  ):
 
         self.run_id = run_id
         self.tracking_uri = tracking_uri
 
         # Load generator checkpoint from MLflow
-        latest_checkpoint_path = self._get_latest_checkpoint_path(run_id)
+        latest_checkpoint_path = self._get_latest_checkpoint_path(run_id, epoch)
         self.gen_ckp = self._load_checkpoint(run_id, latest_checkpoint_path)
         self.gen_net = Generator(self.gen_ckp['model_config']['generator'])
         self.gen_net.load_state_dict(self.gen_ckp['gen_state_dict'])
@@ -45,30 +46,34 @@ class Synthetic_Generator(Dataset):
         config = mlflow.artifacts.download_artifacts(f"runs:/{run_id}/{config[0]}")
         return config
 
-    def _get_latest_checkpoint_path(self, run_id: str):
+    def _get_latest_checkpoint_path(self, run_id: str, epoch):
         """Find the latest checkpoint file (highest-numbered) in the 'checkpoints/' folder."""
-        mlflow.set_tracking_uri(self.tracking_uri)
-        client = mlflow.tracking.MlflowClient()
+        if epoch == -1:
+            mlflow.set_tracking_uri(self.tracking_uri)
+            client = mlflow.tracking.MlflowClient()
 
-        # List artifacts in the "checkpoints" folder
-        artifacts = client.list_artifacts(run_id, path="checkpoints")
-        checkpoint_files = [artifact.path for artifact in artifacts if artifact.path.endswith(".checkpoint")]
+            # List artifacts in the "checkpoints" folder
+            artifacts = client.list_artifacts(run_id, path="checkpoints")
+            checkpoint_files = [artifact.path for artifact in artifacts if artifact.path.endswith(".checkpoint")]
 
-        # Extract numbers from filenames like "235_checkpoint.pth"
-        checkpoint_numbers = []
-        pattern = re.compile(r"(\d+)_checkpoint\.checkpoint")
+            # Extract numbers from filenames like "235_checkpoint.pth"
+            checkpoint_numbers = []
+            pattern = re.compile(r"(\d+)_checkpoint\.checkpoint")
 
-        for file in checkpoint_files:
-            match = pattern.match(file.split("/")[-1])
-            if match:
-                checkpoint_numbers.append(int(match.group(1)))
+            for file in checkpoint_files:
+                match = pattern.match(file.split("/")[-1])
+                if match:
+                    checkpoint_numbers.append(int(match.group(1)))
 
-        if not checkpoint_numbers:
-            raise ValueError("No valid checkpoint files found in MLflow artifacts.")
+            if not checkpoint_numbers:
+                raise ValueError("No valid checkpoint files found in MLflow artifacts.")
 
-        # Find the file with the highest number (latest epoch)
-        latest_checkpoint = max(checkpoint_numbers)
-        latest_checkpoint_file = f"checkpoints/{latest_checkpoint}_checkpoint.checkpoint"
+            # Find the file with the highest number (latest epoch)
+            latest_checkpoint = max(checkpoint_numbers)
+            latest_checkpoint_file = f"checkpoints/{latest_checkpoint}_checkpoint.checkpoint"
+
+        else:
+            latest_checkpoint_file = f"checkpoints/{epoch+1}_checkpoint.checkpoint"
         return latest_checkpoint_file
 
     def _load_checkpoint(self, run_id: str, checkpoint_path: str):

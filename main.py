@@ -39,7 +39,8 @@ def main(args: Namespace):
     validation_data = validation_data[:, :config["data"]["seq_len"], :]
 
     train_set = CustomDataset(train_data, norm=config['data']['normalization'])
-    validation_set = CustomDataset(validation_data, norm=config['data']['normalization'], stats=train_set.stats)
+    validation_set = CustomDataset(validation_data, norm=config['data']['normalization'],
+                                   stats=train_set.stats)
 
     def add_extra_dim(batch):
         # Transpose to (num_samples, num_channels, max_rows)
@@ -83,7 +84,7 @@ def main(args: Namespace):
     start_epoch = 0
     val_start_epoch = 0
     model_not_improved = 0
-    val_metric = config["data"].get("val_score", "fid_score")
+    val_metric = config["data"].get("val_score", "fid_score_statistic")
     best_val_metric = ut.set_validation_metric(val_metric)
     best_fid_score_st = float("inf")
     best_jensen_shannon_divergence = float("inf")

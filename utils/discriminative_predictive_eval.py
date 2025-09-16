@@ -11,14 +11,14 @@ import mlflow
 import os
 
 
-def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0.0.0.0:5003', run_id="f1bc0bef91394a86af291387a102a53a", epoch=-1):
+def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0.0.0.0:5004', run_id="f1bc0bef91394a86af291387a102a53a", epoch=-1):
     """
     Gets config from artifacts in mlflow, reads real data from dataset in config,
     generates synthetic data and computes predictive and discriminative metrics.
 
     """
-    ut.mlflow_init({"URI": "http://0.0.0.0:5003",
-                    "experiment_id": "pred_disc_eval",
+    ut.mlflow_init({"URI": "http://0.0.0.0:5004",
+                    "experiment_id": "pred_disc_eval_tts",
                     "is_used": True,
                     "run_name": "ib-sh"
                     })
@@ -88,29 +88,17 @@ def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0
 
         print("Discriminative accuracy: ", acc, "\n Discriminative score: ", discriminative_score)
         mlflow.end_run()
-    a = [ut.mlflow_log_metric(key, np.mean(value), None, config) for key, value in metrics.items()]
+    _ = [ut.mlflow_log_metric(key, np.mean(value), None, config) for key, value in metrics.items()]
+    _ = [ut.mlflow_log_metric(f'{key}_std', np.std(value), None, config) for key, value in metrics.items()]
+
     mlflow.end_run()
 
 
 if __name__ == "__main__":
-    a = [ "a12b83bdfab242e7b82e6ef5c6dc8529",  # mechanical,
-         "06952188de164d3db1f879ba7ebe8e0d",  # Jumping
-         "d9d1181b9ec54bb7bf6ac3eb0eb2d8f5",  # running
-         "f54f5e3931624f879f98c328f0c01de0",  # ETTh2_720
-         "0714d344d09e489e80a4b5683dea9452",  # ETTh2_336
-         "0b2442e001e34a809cf8910b3beaec6a",  # ETTh2_96
-         "a3e773d077cd441491912781e4756fb5",  # ETTh1_720
-         "a7571ce140234d88a7a629651d321748",  # ETTh1_336
-         "ea315c63cea944adb359dbfc3cb129ad",  # ETTh1_96
-         "f1bc0bef91394a86af291387a102a53a",  # not_anomalous
-         "2b11c47ae3944acca1d9c77bc0fb6161",  # electrical
-        
-         ]
-    
+
     b = [
-    #("e838a4cf81084a57961ac30cca876aa5", 1000),
-    #("bc42de0074364b2e90deb381ee869230", 1000)
-    ("a49ca901d0974c1e8f63140d640b20ce", 420),
+    #("def93d77a62d43f297c543473920b6cd", 440),
+    ("eee11e8d63624eea8a9797e9661d9810", 320)
     ]
     
     for i,e in b:

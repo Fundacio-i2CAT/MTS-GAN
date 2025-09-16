@@ -18,11 +18,16 @@ logger = logging.getLogger("DataLogger")
 def mlflow_save_checkpoint(states, config):
     if config["mlflow"]["is_used"]:
         temp_filename = f"{states['epoch']}_checkpoint.checkpoint"
-        temp_dir = "/data/tmp_extreme_xp/"  # or any other directory where you want to store the temp file
+    
+        temp_dir = tempfile.mkdtemp(prefix="extreme_xp_")
+        os.makedirs(temp_dir, exist_ok=True)
         tmpfile_name = os.path.join(temp_dir, temp_filename)
+
         torch.save(states, tmpfile_name)
         mlflow.log_artifact(tmpfile_name, artifact_path="checkpoints")
         os.remove(tmpfile_name)
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
         logger.info("Model looged in MLFLOW")
     
 

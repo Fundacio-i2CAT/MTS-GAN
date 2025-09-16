@@ -5,7 +5,8 @@ import logging
 from torch.utils import data
 import matplotlib.pyplot as plt
 import os
-
+import shutil
+import tempfile
 import utils.metrics as metrics
 import utils.utils as ut
 import pandas as pd
@@ -77,14 +78,20 @@ def gen_plot(gen_net, epoch, config):
             axs[row, col].set_ylabel(f'f{feature_index + 1}')
 
     plt.subplots_adjust(hspace=0.4)
+
+    temp_dir = tempfile.mkdtemp(prefix="extreme_xp_")
+    os.makedirs(temp_dir, exist_ok=True)
     temp_filename = f"{epoch}_epoch.jpeg"
-    temp_dir = "/data/tmp_extreme_xp/"  
-    tmpfile_name = os.path.join(temp_dir, temp_filename)
-    plt.savefig(tmpfile_name, format='jpeg')
+    tmpfile_path = os.path.join(temp_dir, temp_filename)
+
+    
+    plt.savefig(tmpfile_path, format='jpeg')
     plt.clf()
-    ut.mlflow_log_artifact(tmpfile_name, artifact_path="synthetic_signals", config=config)
+    ut.mlflow_log_artifact(tmpfile_path, artifact_path="synthetic_signals", config=config)
     plt.close()
-    os.remove(tmpfile_name)
+    
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)
 
 
 def save_time_series_plot(array_generated, array_real, epoch, config):
@@ -107,13 +114,17 @@ def save_time_series_plot(array_generated, array_real, epoch, config):
                 axs[i, j].plot(df['time'], df[f'{key}{feat}_{i}'])
             axs[i, j].tick_params(axis='y', labelcolor='blue')
 
-    temp_filename = f"enc_{epoch}_epoch.png"
-    temp_dir = "/tmp/tmp_extreme_xp/"
-    tmpfile_name = os.path.join(temp_dir, temp_filename)
+
+    temp_dir = tempfile.mkdtemp(prefix="extreme_xp_")
     os.makedirs(temp_dir, exist_ok=True)
+    temp_filename = f"enc_{epoch}_epoch.png"
+    tmpfile_path = os.path.join(temp_dir, temp_filename)
+
     plt.tight_layout()
-    plt.savefig(tmpfile_name)
+    plt.savefig(tmpfile_path)
     plt.clf()
-    ut.mlflow_log_artifact(tmpfile_name, artifact_path="synthetic_vs_real_signals", config=config)
+    ut.mlflow_log_artifact(tmpfile_path, artifact_path="synthetic_vs_real_signals", config=config)
     plt.close()
-    os.remove(tmpfile_name)
+
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)

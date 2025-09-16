@@ -88,7 +88,9 @@ def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0
 
         print("Discriminative accuracy: ", acc, "\n Discriminative score: ", discriminative_score)
         mlflow.end_run()
-    a = [ut.mlflow_log_metric(key, np.mean(value), None, config) for key, value in metrics.items()]
+    _ = [ut.mlflow_log_metric(key, np.mean(value), None, config) for key, value in metrics.items()]
+    _ = [ut.mlflow_log_metric(f'{key}_std', np.std(value), None, config) for key, value in metrics.items()]
+
     mlflow.end_run()
 
 

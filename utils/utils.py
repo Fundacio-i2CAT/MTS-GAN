@@ -126,7 +126,10 @@ def mlflow_log_summary(gen_net, dis_net, config):
             f.write(str(summary(gen_net, input_size=(1, config["network"]["generator"]['z_dim']), device='cuda')) + "\n\n")
             f.write("Discriminator Model Summary:\n")
             f.write("=" * 50 + "\n")
-            f.write(str(summary(dis_net, input_size=(1, config["data"]["seq_len"],config["data"]["num_channels"]), device='cuda')) + "\n\n")
+            if config['type'] == "tts":
+                f.write(str(summary(dis_net, input_size=(1, config["data"]["num_channels"], 1, config["data"]["seq_len"]), device='cuda')) + "\n\n")
+            else:
+                f.write(str(summary(dis_net, input_size=(1, config["data"]["seq_len"],config["data"]["num_channels"]), device='cuda')) + "\n\n")
 
         mlflow_log_artifact(summary_file, None, config)
 

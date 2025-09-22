@@ -4,7 +4,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 from scipy.spatial.distance import cdist
 from tsfresh.feature_extraction import extract_features, MinimalFCParameters
 from sklearn.metrics import mean_squared_error
-
+from tsfeatures import tsfeatures
+import pandas as pd
 import utils.utils as ut
 
 
@@ -102,6 +103,31 @@ def compute_statistic_metrics(real_signals, synthetic_signals):
     return metrics
 
 
+def compute_features_metrics(real_signals, synthetic_signals):
+
+
+    real_feature_df = ut.convert_to_tsfresh_format(real_signals)
+    real_feature_df.rename(columns={'id': 'unique_id', 'time':'ds', 'value':'y'}, inplace=True)
+    real_feature_df['ds'] = np.tile(pd.date_range(start='2023-01-01', periods=real_signals.shape[1], freq='D'), real_signals.shape[0])
+
+    synthetic_feature_df = ut.convert_to_tsfresh_format(synthetic_signals)
+    synthetic_feature_df.rename(columns={'id': 'unique_id', 'time':'ds', 'value':'y'}, inplace=True)
+    synthetic_feature_df['ds'] = np.tile(pd.date_range(start='2023-01-01', periods=synthetic_signals.shape[1], freq='D'), real_signals.shape[0])
+    
+    real_feat = tsfeatures(real_feature_df)
+    real_feat = real_feat.fillna(0)
+    real_feat = real_feat.drop(columns=["unique_id"])
+
+    syn_feat = tsfeatures(synthetic_feature_df)
+    syn_feat = syn_feat.fillna(0)
+    syn_feat = syn_feat.drop(columns=["unique_id"])
+
+    metrics = {"fid_temporal": average_fid_score(real_feat, syn_feat),
+               "jensen_shannon_temporal": average_jensen_shannon_distance(real_feat, syn_feat),
+               "cosine_similarity_temporal": average_cosine_similarity(real_feat, syn_feat)}
+
+    return metrics
+
 def compute_metrics(real_data, synthetic_data):
     # shape (num_seq, seq_len, features)
     real_data, synthetic_data = np.array(real_data), np.array(synthetic_data)
@@ -112,19 +138,27 @@ def compute_metrics(real_data, synthetic_data):
     avg_fid_statistic_list = []
     avg_cosine_statistic_list = []
     avg_js_statistic_list = []
+    avg_fid_t_statistic_list = []
+    avg_cosine_t_statistic_list = []
+    avg_js_t_statistic_list = []
 
+    synthetic_data = np.nan_to_num(synthetic_data, nan=0)
     # feature level
     for i in range(real_data.shape[2]):
         cosine_sim = average_cosine_similarity(real_data[:, :, i], synthetic_data[:, :, i])
         js_div = average_jensen_shannon_distance(real_data[:, :, i], synthetic_data[:, :, i])
         statistic_metrics = compute_statistic_metrics(real_data[:, :, i], synthetic_data[:, :, i])
+        temporal_metrics = compute_features_metrics(real_data[:, :, i], synthetic_data[:, :, i])
 
         metrics[f"feature_{i + 1}"] = {
             "cosine_similarity": cosine_sim,
             "jensen_shannon_divergence": js_div,
             "fid_score_statistic": statistic_metrics["fid_statistic"],
             "cosine_similarity_statistic": statistic_metrics["cosine_similarity_statistic"],
-            "jenssen_shannon_statistic_statistic": statistic_metrics["jensen_shannon_statistic"]
+            "jenssen_shannon_statistic_statistic": statistic_metrics["jensen_shannon_statistic"],
+            "fid_temporal": temporal_metrics["fid_temporal"],
+            "cosine_similarity_temporal": temporal_metrics["cosine_similarity_temporal"],
+            "jensen_shannon_temporal": temporal_metrics["jensen_shannon_temporal"]
         }
 
         avg_cosine_list.append(cosine_sim)
@@ -132,6 +166,9 @@ def compute_metrics(real_data, synthetic_data):
         avg_fid_statistic_list.append(statistic_metrics["fid_statistic"])
         avg_cosine_statistic_list.append(statistic_metrics["cosine_similarity_statistic"])
         avg_js_statistic_list.append(statistic_metrics["jensen_shannon_statistic"])
+        avg_fid_t_statistic_list.append(temporal_metrics["fid_temporal"])
+        avg_cosine_t_statistic_list.append(temporal_metrics["cosine_similarity_temporal"])
+        avg_js_t_statistic_list.append(temporal_metrics["jensen_shannon_temporal"])
 
     # Flatten dictionary
     m = {f"{feature}_{metric}": value for feature, values in metrics.items() for metric, value in values.items()}
@@ -142,7 +179,10 @@ def compute_metrics(real_data, synthetic_data):
         "average_jensen_shannon_divergence": np.mean(avg_js_list),
         "average_fid_score_statistic": np.mean(avg_fid_statistic_list),
         "average_cosine_similarity_statistic": np.mean(avg_cosine_statistic_list),
-        "average_jensen_shannon_divergence_statistic": np.mean(avg_js_statistic_list)
+        "average_jensen_shannon_divergence_statistic": np.mean(avg_js_statistic_list),
+        "average_fid_score_temporal": np.mean(avg_fid_t_statistic_list),
+        "average_cosine_similarity_temporal": np.mean(avg_cosine_t_statistic_list),
+        "average_jensen_shannon_divergence_temporal": np.mean(avg_js_t_statistic_list)
 
     })
 

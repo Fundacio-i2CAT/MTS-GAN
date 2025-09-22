@@ -217,7 +217,7 @@ def load_params(model, new_param, args, mode="gpu"):
 def set_validation_metric(val_metric: str) -> float:
     logger.info(f"Validation metric used: {val_metric}")
 
-    if val_metric in ["fid_score_statistic", "jensen_shannon_divergence"]:
+    if val_metric in ["fid_score_statistic", "jensen_shannon_divergence", "fid_score_temporal"]:
         return float("inf")
     elif val_metric == "cosine_similarity":
         return float("-inf")

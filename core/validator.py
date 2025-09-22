@@ -24,7 +24,7 @@ def validate(gen_net: torch.nn.Module, validation_loader: data.DataLoader, confi
 
         for iter_idx, ts in enumerate(tqdm(validation_loader, desc="Validation Progress", unit="batch")):
             real_ts = ts.to(device, dtype=torch.float, non_blocking=True)
-            z = torch.randn(ts.shape[0], config["network"]["generator"]["latent_dim"], device=device)
+            z = torch.randn(ts.shape[0], config["network"]["generator"]["z_dim"], device=device)
             fake_ts = gen_net(z)
 
             real_ts = real_ts.cpu().numpy()
@@ -60,7 +60,7 @@ def gen_plot(gen_net, epoch, config):
     device = next(gen_net.parameters()).device
 
     for i in range(6):
-        fake_noise = torch.randn(1, config["network"]["generator"]["latent_dim"], device=device)
+        fake_noise = torch.randn(1, config["network"]["generator"]["z_dim"], device=device)
         fake_sigs = gen_net(fake_noise).to('cpu').detach().numpy()
         synthetic_data.append(fake_sigs)
         

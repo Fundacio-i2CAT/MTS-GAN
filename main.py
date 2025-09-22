@@ -5,13 +5,12 @@ import mlflow
 import logging
 import h5py
 import torch
-
+from architecture.model import ModelFactory
 from copy import deepcopy
 import numpy as np
 import core.trainer as trainer
 import core.validator as validator
 from data.dataLoader import CustomDataset
-from architecture import discriminator, generator
 import utils.utils as ut
 import utils.optimizer as opt
 import utils.logger_ut as log_ut
@@ -42,27 +41,33 @@ def main(args: Namespace):
     validation_set = CustomDataset(validation_data, norm=config['data']['normalization'],
                                    stats=train_set.stats)
 
-    def add_extra_dim(batch):
-        # Transpose to (num_samples, num_channels, max_rows)
-        batch = np.transpose(batch, (0, 2, 1))
-        # Reshape to (num_samples, num_channels, 1, seq_len)
-        batch = batch.reshape(batch.shape[0], config["data"]["num_channels"], 1, config["data"]["seq_len"])
-        batch = torch.from_numpy(batch).float()
-        return batch
+    if config["type"] == "tts":
+        def add_extra_dim(batch):
+            # Transpose to (num_samples, num_channels, max_rows)
+            batch = np.transpose(batch, (0, 2, 1))
+            # Reshape to (num_samples, num_channels, 1, seq_len)
+            batch = batch.reshape(batch.shape[0], config["data"]["num_channels"], 1, config["data"]["seq_len"])
+            batch = torch.from_numpy(batch).float()
+            return batch
+    else:
+        def add_extra_dim(batch):
+
+            batch = np.array(batch)
+            batch = torch.from_numpy(batch).float()
+            return batch
 
     train_loader = data.DataLoader(train_set, batch_size=config["trainer"]["batch_size"], shuffle=True, collate_fn=add_extra_dim)
     validation_loader = data.DataLoader(validation_set, batch_size=config["trainer"]["batch_size"], shuffle=True, collate_fn=add_extra_dim)
 
     # Network initialization
-    gen_net = generator.Generator(config["network"]["generator"])
-    dis_net = discriminator.Discriminator(config["network"]["discriminator"])
+    gen_net, dis_net = ModelFactory.create_model(config)
+
+    gen_net.to(device)
+    dis_net.to(device)
 
     ut.mlflow_log_summary(gen_net, dis_net, config)
     ut.mlflow_log_artifact(args.config, None, config)
     ut.mlflow_log_params(ut.flatten_dict(config), config)
-
-    gen_net.to(device)
-    dis_net.to(device)
 
     gen_net.apply(lambda m: ut.weights_init(config["network"]["init_type"], m))
     dis_net.apply(lambda m: ut.weights_init(config["network"]["init_type"], m))

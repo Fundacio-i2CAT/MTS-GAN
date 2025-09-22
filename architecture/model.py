@@ -1,0 +1,20 @@
+import architecture.mamba.generator as mb_gen
+import architecture.mamba.discriminator as mb_disc
+import architecture.tts_gan.generator as tts_gen
+import architecture.tts_gan.discriminator as tts_disc
+
+class ModelFactory:
+    @staticmethod
+    def create_model(config: dict):
+        architecture = config["type"]
+    
+        if architecture == "tts":
+            gen_net = tts_gen.Generator(config["network"]["generator"])
+            disc_net = tts_disc.Discriminator(config["network"]["discriminator"])
+            return gen_net, disc_net
+        elif architecture == "mamba":
+            gen_net = mb_gen.Generator(config["network"]["generator"])
+            disc_net = mb_disc.Discriminator(config["network"]["discriminator"])
+            return gen_net, disc_net
+        else:
+            raise ValueError(f"Unknown architecture: {architecture}")

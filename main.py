@@ -5,13 +5,12 @@ import mlflow
 import logging
 import h5py
 import torch
-
+from architecture.model import ModelFactory
 from copy import deepcopy
 import numpy as np
 import core.trainer as trainer
 import core.validator as validator
 from data.dataLoader import CustomDataset
-from architecture import discriminator, generator
 import utils.utils as ut
 import utils.optimizer as opt
 import utils.logger_ut as log_ut
@@ -42,27 +41,33 @@ def main(args: Namespace):
     validation_set = CustomDataset(validation_data, norm=config['data']['normalization'],
                                    stats=train_set.stats)
 
-    def add_extra_dim(batch):
-        # Transpose to (num_samples, num_channels, max_rows)
-        batch = np.transpose(batch, (0, 2, 1))
-        # Reshape to (num_samples, num_channels, 1, seq_len)
-        batch = batch.reshape(batch.shape[0], config["data"]["num_channels"], 1, config["data"]["seq_len"])
-        batch = torch.from_numpy(batch).float()
-        return batch
+    if config["type"] == "tts":
+        def add_extra_dim(batch):
+            # Transpose to (num_samples, num_channels, max_rows)
+            batch = np.transpose(batch, (0, 2, 1))
+            # Reshape to (num_samples, num_channels, 1, seq_len)
+            batch = batch.reshape(batch.shape[0], config["data"]["num_channels"], 1, config["data"]["seq_len"])
+            batch = torch.from_numpy(batch).float()
+            return batch
+    else:
+        def add_extra_dim(batch):
+
+            batch = np.array(batch)
+            batch = torch.from_numpy(batch).float()
+            return batch
 
     train_loader = data.DataLoader(train_set, batch_size=config["trainer"]["batch_size"], shuffle=True, collate_fn=add_extra_dim)
     validation_loader = data.DataLoader(validation_set, batch_size=config["trainer"]["batch_size"], shuffle=True, collate_fn=add_extra_dim)
 
     # Network initialization
-    gen_net = generator.Generator(config["network"]["generator"])
-    dis_net = discriminator.Discriminator(config["network"]["discriminator"])
+    gen_net, dis_net = ModelFactory.create_model(config)
+
+    gen_net.to(device)
+    dis_net.to(device)
 
     ut.mlflow_log_summary(gen_net, dis_net, config)
     ut.mlflow_log_artifact(args.config, None, config)
     ut.mlflow_log_params(ut.flatten_dict(config), config)
-
-    gen_net.to(device)
-    dis_net.to(device)
 
     gen_net.apply(lambda m: ut.weights_init(config["network"]["init_type"], m))
     dis_net.apply(lambda m: ut.weights_init(config["network"]["init_type"], m))
@@ -118,18 +123,18 @@ def main(args: Namespace):
             js_div = computed_metrics["average_jensen_shannon_divergence"]
             cosine_sim = computed_metrics["average_cosine_similarity"]
 
-            logger.info(f"Validation completed for Epoch {epoch}/{int(end_epoch)}. \n" +
-                        f"FID Score statistic: {fid_score_st:.4f} \n" +
-                        f"Jensen-Shannon Divergence statistic: {js_div_st:.4f} \n" +
-                        f"Cosine Similarity statistic: {cosine_sim_st:.4f} \n" +
-                        f"Jensen-Shannon Divergence: {js_div:.4f} \n" +
-                        f"Cosine Similarity: {cosine_sim:.4f} \n" +
-                        f"Best validation metric: {best_val_metric:.4f}")
+            # logger.info(f"Validation completed for Epoch {epoch}/{int(end_epoch)}. \n" +
+            #             f"FID Score statistic: {fid_score_st:.4f} \n" +
+            #             f"Jensen-Shannon Divergence statistic: {js_div_st:.4f} \n" +
+            #             f"Cosine Similarity statistic: {cosine_sim_st:.4f} \n" +
+            #             f"Jensen-Shannon Divergence: {js_div:.4f} \n" +
+            #             f"Cosine Similarity: {cosine_sim:.4f} \n" +
+            #             f"Best validation metric: {best_val_metric:.4f}")
 
             if (val_metric == "cosine_similarity" and cosine_sim > best_val_metric) or \
                (val_metric != "cosine_similarity" and computed_metrics["average_" + val_metric] < best_val_metric):
 
-                logger.info("Improvemenent on the FID score saving model")
+                logger.info(f"Improvemenent on the FID score saving model, old: {best_val_metric}, New best: {computed_metrics['average_' + val_metric]}")
                 ut.mlflow_save_checkpoint({'epoch': epoch + 1,
                                            'gen_state_dict': gen_net.state_dict(),
                                            'dis_state_dict': dis_net.state_dict(),
@@ -163,6 +168,7 @@ def main(args: Namespace):
                                         'dis_optimizer': dis_optimizer.state_dict(),
                                         'model_config': config["network"]}, config=config)
     if config["mlflow"]["is_used"]:
+        ut.mlflow_log_metric("best_val_metric", best_val_metric, None, config)
         ut.mlflow_log_metric("best_fid_score_st", best_fid_score_st, None, config)
         ut.mlflow_log_metric("best_cosine_similarity_st", best_cosine_alignment_st, None, config)
         ut.mlflow_log_metric("best_js_div_st", best_js_div_st, None, config)
@@ -176,7 +182,7 @@ def main(args: Namespace):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--config", type=str, default="config.yaml",
+    parser.add_argument("--config", type=str, default="config_tts.yaml",
                         help="Path to YAML config file")
     args = parser.parse_args()
     main(args)

@@ -17,7 +17,7 @@ def train_discriminator(gen_net: nn.Module, dis_net: nn.Module, dis_optimizer, d
                         real_ts, config: dict, ts, device, iter_idx, global_step, num_batches):
 
     dis_config = config["trainer"]["loss"]["d_loss"]
-    z = torch.randn(ts.shape[0], config["network"]["generator"]["latent_dim"], device=device)
+    z = torch.randn(ts.shape[0], config["network"]["generator"]["z_dim"], device=device)
     # Generate fake ts with generator
     fake_ts = gen_net(z).detach()
     # Pass through the discriminator network both real and fake ts
@@ -56,7 +56,7 @@ def train_generator(gen_net: nn.Module, dis_net: nn.Module, gen_optimizer, gen_s
 
     if global_step % (n_critic * dis_accumulated_times) == 0:
         for accumulated_idx in range(gen_accumulated_times):
-            z = torch.randn(ts.shape[0], config["network"]["generator"]["latent_dim"], device=device)
+            z = torch.randn(ts.shape[0], config["network"]["generator"]["z_dim"], device=device)
             fake_ts = gen_net(z)
             fake_validity = dis_net(fake_ts)
             g_loss = compute_g_loss(fake_ts, fake_validity, z, gen_config, dis_net, device)

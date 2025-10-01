@@ -18,14 +18,14 @@ def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0
 
     """
     ut.mlflow_init({"URI": "http://0.0.0.0:5004",
-                    "experiment_id": "pred_disc_eval_tts",
+                    "experiment_id": "pred_disc_eval",
                     "is_used": True,
                     "run_name": "ib-sh"
                     })
     syn_generator = Synthetic_Generator(run_id=run_id, tracking_uri=tracking_uri, epoch=epoch)
 
     config = ut.load_yaml(syn_generator.config)
-    ut.mlflow_log_param("model", "tts", None, config)
+    ut.mlflow_log_param("model", config["type"], None, config)
     ut.mlflow_log_param("dataset", os.path.basename(config['data']['dataset_path']), None, config)
     metrics = {"p_mse": [],
                "d_score": [],
@@ -53,38 +53,29 @@ def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0
         test = np.array([test_set[i] for i in range(len(test_set))])
 
         syn_samples = syn_generator.generate_samples(len(validation_set))
-        syn_samples = syn_samples.squeeze(2)
-        syn_samples = syn_samples.transpose(0, 2, 1)
 
         extra_samples = syn_generator.generate_samples(len(test_set))
-        extra_samples = extra_samples.squeeze(2)
-        extra_samples = extra_samples.transpose(0, 2, 1)
+
+        if config["type"] == "tts":
+            syn_samples = syn_samples.squeeze(2)
+            syn_samples = syn_samples.transpose(0, 2, 1)
+            extra_samples = extra_samples.squeeze(2)
+            extra_samples = extra_samples.transpose(0, 2, 1)
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         mse = pred.predictive_score_metrics(test, syn_samples, device)
-        #baseline_mse = pred.predictive_score_metrics(test, validation, device)
 
         ut.mlflow_log_metric("p_mse", mse, None, config)
-        #ut.mlflow_log_metric("p_mse_baseline", baseline_mse, None, config)
 
         acc, discriminative_score = disc.discriminative_score_metrics(validation, test, np.concatenate((syn_samples, extra_samples), axis=0), device)
-        #acc_baseline, discriminative_score_baseline = disc.discriminative_score_metrics(validation, test, train, device)
 
         ut.mlflow_log_metric("d_score", discriminative_score, None, config)
         ut.mlflow_log_metric("d_acc", acc, None, config)
 
-        #ut.mlflow_log_metric("d_score_baseline", discriminative_score_baseline, None, config)
-        #ut.mlflow_log_metric("d_acc_baseline", acc_baseline, None, config)
-
         metrics['p_mse'].append(mse)
-        #metrics['p_mse_baseline'].append(baseline_mse)
         metrics['d_score'].append(discriminative_score)
         metrics['d_acc'].append(acc)
-        #metrics['d_score_baseline'].append(discriminative_score_baseline)
-        #metrics['d_acc_baseline'].append(acc_baseline)
-
-        #print("Trained on real data: ", baseline_mse, "\n Trained on synthetic data:", mse)
 
         print("Discriminative accuracy: ", acc, "\n Discriminative score: ", discriminative_score)
         mlflow.end_run()
@@ -97,9 +88,18 @@ def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0
 if __name__ == "__main__":
 
     b = [
-    #("def93d77a62d43f297c543473920b6cd", 440),
-    ("eee11e8d63624eea8a9797e9661d9810", 320)
+
+        # ("e76e808c059e44b89791cfbfceadb1fd", 270),
+        # ("70052fc8deb545919da5dc1c6fe37563", 200),
+        # ("602e1291dbd142b99e9ec53c1cb79c75", 440),
+        # ("3e9c8e0c5ab441459663dd407988ce64", 400),
+        # ("39dbe7d822f14e1c888fa861b2991692", 480),
+        # ("59ebb750e2c04e17a5ee7acbc4fe36c3", 420),
+        # ("a141f4383fa549a589ad71a668a35f8d", 420),
+        # ("83881951cbe24217a55d21f543afa425", 280),
+        # ("02e1d868e3d24a3282869c9636dfa8fa", 210),
+
     ]
-    
-    for i,e in b:
+
+    for i, e in b:
         discriminative_predictive_evaluation(n_repetitions=5, run_id=i, epoch=e)

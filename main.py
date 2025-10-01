@@ -1,21 +1,21 @@
+"""Main script"""
 import argparse
-from argparse import Namespace
-from torch.utils import data
-import mlflow
 import logging
-import h5py
-import torch
-from architecture.model import ModelFactory
 from copy import deepcopy
+from argparse import Namespace
+import mlflow
+import h5py
+from torch.utils import data
+import torch
 import numpy as np
 import core.trainer as trainer
 import core.validator as validator
 from data.dataLoader import CustomDataset
+from architecture.model import ModelFactory
 import utils.utils as ut
 import utils.optimizer as opt
 import utils.logger_ut as log_ut
-import yaml
-import itertools
+
 
 logger = logging.getLogger("DataLogger")
 
@@ -23,7 +23,7 @@ log_ut.setup_logger(debug=True)
 
 
 def main(args: Namespace):
-
+    """Main func"""
     config = ut.load_yaml(args.config)
     ut.mlflow_init(config["mlflow"])
     ut.set_random_seed(config["data"]["random_seed"])
@@ -46,7 +46,8 @@ def main(args: Namespace):
             # Transpose to (num_samples, num_channels, max_rows)
             batch = np.transpose(batch, (0, 2, 1))
             # Reshape to (num_samples, num_channels, 1, seq_len)
-            batch = batch.reshape(batch.shape[0], config["data"]["num_channels"], 1, config["data"]["seq_len"])
+            batch = batch.reshape(batch.shape[0], config["data"]["num_channels"],
+                                  1, config["data"]["seq_len"])
             batch = torch.from_numpy(batch).float()
             return batch
     else:
@@ -56,8 +57,10 @@ def main(args: Namespace):
             batch = torch.from_numpy(batch).float()
             return batch
 
-    train_loader = data.DataLoader(train_set, batch_size=config["trainer"]["batch_size"], shuffle=True, collate_fn=add_extra_dim)
-    validation_loader = data.DataLoader(validation_set, batch_size=config["trainer"]["batch_size"], shuffle=True, collate_fn=add_extra_dim)
+    train_loader = data.DataLoader(train_set, batch_size=config["trainer"]["batch_size"],
+                                   shuffle=True, collate_fn=add_extra_dim)
+    validation_loader = data.DataLoader(validation_set, batch_size=config["trainer"]["batch_size"],
+                                        shuffle=True, collate_fn=add_extra_dim)
 
     # Network initialization
     gen_net, dis_net = ModelFactory.create_model(config)
@@ -76,16 +79,18 @@ def main(args: Namespace):
     gen_optimizer = opt.get_optimizer(config, config["trainer"]["g_lr"], gen_net.parameters())
     dis_optimizer = opt.get_optimizer(config, config["trainer"]["d_lr"], dis_net.parameters())
 
-    gen_scheduler = opt.get_scheduler(gen_optimizer, config["trainer"]['scheduler']["g_scheduler"], total_iters=config["trainer"]["epochs"] * len(train_loader))
-    dis_scheduler = opt.get_scheduler(dis_optimizer, config["trainer"]['scheduler']["d_scheduler"], total_iters=config["trainer"]["epochs"] * len(train_loader))
+    gen_scheduler = opt.get_scheduler(gen_optimizer, config["trainer"]['scheduler']["g_scheduler"],
+                                      total_iters=config["trainer"]["epochs"] * len(train_loader))
+    dis_scheduler = opt.get_scheduler(dis_optimizer, config["trainer"]['scheduler']["d_scheduler"],
+                                      total_iters=config["trainer"]["epochs"] * len(train_loader))
 
-    # Exponential Moving Average 
+    # Exponential Moving Average
     avg_gen_net = deepcopy(gen_net).cpu()
     gen_avg_param = ut.copy_params(avg_gen_net)
     del avg_gen_net
 
     end_epoch = config["trainer"]["epochs"]
-    # TODO change start epoch in case it is loaded from a checkpint
+
     start_epoch = 0
     val_start_epoch = 0
     model_not_improved = 0
@@ -97,7 +102,7 @@ def main(args: Namespace):
     best_cosine_alignment_st = float("-inf")
     best_cosine_alignment = float("-inf")
 
-    logger.info(f"Validation metric used: {val_metric}")
+    logger.info("Validation metric used: %s", val_metric)
     tracker = {"train_global_step": start_epoch,
                "validation_global_step": val_start_epoch,
                "end_epoch": end_epoch}
@@ -111,7 +116,8 @@ def main(args: Namespace):
 
         # Validtion and checkpoitn saving
         if epoch % config["validator"]["val_freq"] == 0:
-            computed_metrics = validator.validate(gen_net, validation_loader, config, tracker, device)
+            computed_metrics = validator.validate(gen_net, validation_loader,
+                                                  config, tracker, device)
             validator.gen_plot(gen_net, epoch, config)
 
             avg_gen_net = deepcopy(gen_net)
@@ -123,18 +129,11 @@ def main(args: Namespace):
             js_div = computed_metrics["average_jensen_shannon_divergence"]
             cosine_sim = computed_metrics["average_cosine_similarity"]
 
-            # logger.info(f"Validation completed for Epoch {epoch}/{int(end_epoch)}. \n" +
-            #             f"FID Score statistic: {fid_score_st:.4f} \n" +
-            #             f"Jensen-Shannon Divergence statistic: {js_div_st:.4f} \n" +
-            #             f"Cosine Similarity statistic: {cosine_sim_st:.4f} \n" +
-            #             f"Jensen-Shannon Divergence: {js_div:.4f} \n" +
-            #             f"Cosine Similarity: {cosine_sim:.4f} \n" +
-            #             f"Best validation metric: {best_val_metric:.4f}")
-
             if (val_metric == "cosine_similarity" and cosine_sim > best_val_metric) or \
                (val_metric != "cosine_similarity" and computed_metrics["average_" + val_metric] < best_val_metric):
 
-                logger.info(f"Improvemenent on the FID score saving model, old: {best_val_metric}, New best: {computed_metrics['average_' + val_metric]}")
+                logger.info("Improvement on the FID score saving model, old: %s, New best: %s",
+                            best_val_metric, computed_metrics['average_' + val_metric])
                 ut.mlflow_save_checkpoint({'epoch': epoch + 1,
                                            'gen_state_dict': gen_net.state_dict(),
                                            'dis_state_dict': dis_net.state_dict(),
@@ -153,8 +152,9 @@ def main(args: Namespace):
 
             else:
                 model_not_improved += 1
-                logger.info(f"No improvement on the validation metric. Current best: {best_val_metric:.4f}. " +
-                            f"Model not improved for {model_not_improved} epochs.")
+
+                logger.info("No improvement on the validation metric. Current best: %.4f. Model not improved for %s epochs.",
+                            best_val_metric, model_not_improved)
 
             if model_not_improved >= config["trainer"]["early_stopping"]:
                 print(f"Model not improved in {model_not_improved}, stoping training")
@@ -172,7 +172,8 @@ def main(args: Namespace):
         ut.mlflow_log_metric("best_fid_score_st", best_fid_score_st, None, config)
         ut.mlflow_log_metric("best_cosine_similarity_st", best_cosine_alignment_st, None, config)
         ut.mlflow_log_metric("best_js_div_st", best_js_div_st, None, config)
-        ut.mlflow_log_metric("best_jensen_shannon_divergence", best_jensen_shannon_divergence, None, config)
+        ut.mlflow_log_metric("best_jensen_shannon_divergence", best_jensen_shannon_divergence,
+                             None, config)
         ut.mlflow_log_metric("best_cosine_similarity", best_cosine_alignment, None, config)
         mlflow.end_run()
 
@@ -184,5 +185,5 @@ if __name__ == "__main__":
 
     parser.add_argument("--config", type=str, default="config_tts.yaml",
                         help="Path to YAML config file")
-    args = parser.parse_args()
-    main(args)
+    argss = parser.parse_args()
+    main(argss)

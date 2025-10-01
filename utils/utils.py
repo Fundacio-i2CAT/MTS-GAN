@@ -1,24 +1,26 @@
-import yaml
+"""Utils"""
 import os
-import torch
-import torch.nn as nn
 import random
-import numpy as np
-import mlflow
+import shutil
 import logging
-import pandas as pd
-from torchinfo import summary
 from copy import deepcopy
 import tempfile
-import shutil
+import yaml
+import torch
+import torch.nn as nn
+import numpy as np
+import mlflow
+import pandas as pd
+from torchinfo import summary
 
 logger = logging.getLogger("DataLogger")
 
 
 def mlflow_save_checkpoint(states, config):
+    """Save checkpoint"""
     if config["mlflow"]["is_used"]:
         temp_filename = f"{states['epoch']}_checkpoint.checkpoint"
-    
+
         temp_dir = tempfile.mkdtemp(prefix="extreme_xp_")
         os.makedirs(temp_dir, exist_ok=True)
         tmpfile_name = os.path.join(temp_dir, temp_filename)
@@ -29,9 +31,10 @@ def mlflow_save_checkpoint(states, config):
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
         logger.info("Model looged in MLFLOW")
-    
+
 
 def mlflow_save_binary(validation: np.ndarray, epoch: str, config: dict):
+    """SAve data"""
     if config["mlflow"]["is_used"]:
         temp_filename = f"{epoch}_validation_binary.npy"
         temp_dir = tempfile.mkdtemp(prefix="extreme_xp_")
@@ -46,23 +49,24 @@ def mlflow_save_binary(validation: np.ndarray, epoch: str, config: dict):
 
 
 def load_yaml(file_path: str) -> dict:
- 
+    """Load yaml file"""
     if not os.path.exists(file_path):
-        logger.error(f"Yaml file not found in {file_path}")
+        logger.error("Yaml file not found in %s", file_path)
         raise FileNotFoundError(f"Error: File '{file_path}' not found.")
 
     try:
         with open(file_path, "r", encoding="utf-8") as file:
             return yaml.safe_load(file)
-        
+
     except Exception as e:
-        logger.error(f"Unexpected error while loading {file_path}")
-        raise Exception(f"Unexpected error loading '{file_path}': {e}")
+        logger.error("Unexpected error while loading %s", file_path)
+        raise RuntimeError(f"Unexpected error loading '{file_path}'") from e
 
 
 def set_random_seed(seed: int):
+    """Random seed"""
     if seed is not None:
-        logger.info(f"Seting random seed: {seed}")
+        logger.info("Setting random seed: %s", seed)
         torch.manual_seed(seed)
         torch.cuda.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
@@ -75,10 +79,10 @@ def set_random_seed(seed: int):
 
 
 def mlflow_init(config: dict):
-    # TODO if mlflow not used init loging values
+    """Initialize mlflow"""
     if config.get("is_used", False):
         mlflow.set_tracking_uri(config["URI"])
-        
+
         experiment = mlflow.get_experiment_by_name(config["experiment_id"])
         if experiment is None:
             experiment_id = mlflow.create_experiment(config["experiment_id"])
@@ -87,67 +91,75 @@ def mlflow_init(config: dict):
 
         mlflow.set_experiment(experiment_id=experiment_id)
         mlflow.start_run()
-        
-        logger.info(f"MLFLOW initialized at {config['URI']}")
-        logger.info(f"MLFLOW experiment_id set to {experiment_id}")
+
+        logger.info("MLFLOW initialized at %s", config['URI'])
+        logger.info("MLFLOW experiment_id set to %s", experiment_id)
     else:
         logger.info("MLFLOW not in use")
 
 
 def mlflow_log_metric(metric: str, value: float, step, config: dict):
-    # TODO if mlflow not used log values to logs
+    """Log metrics"""
     if config["mlflow"]["is_used"]:
         mlflow.log_metric(metric, value, step)
-        
+
 
 def mlflow_log_artifact(tmpfile_name: str, artifact_path: str, config: dict):
-    # TODO if mlflow not used iamges to path
+    """Log artifacts"""
     if config["mlflow"]["is_used"]:
         mlflow.log_artifact(tmpfile_name, artifact_path=artifact_path)
 
 
 def mlflow_log_params(params: dict, config: dict):
+    """Log params"""
     if config["mlflow"]["is_used"]:
         mlflow.log_params(params)
 
 
 def mlflow_log_param(param: str, value: float, step, config: dict):
+    """Log param"""
     if config["mlflow"]["is_used"]:
         mlflow.log_param(param, value, step)
 
 
 def mlflow_log_summary(gen_net, dis_net, config):
+    """Log summary"""
     if config["mlflow"]["is_used"]:
         summary_file = "model_summaries.txt"
-        with open(summary_file, "w") as f:
+        with open(summary_file, "w", encoding="utf-8") as f:
             # Write Generator summary
             f.write("Generator Model Summary:\n")
             f.write("=" * 50 + "\n")
-            f.write(str(summary(gen_net, input_size=(1, config["network"]["generator"]['z_dim']), device='cuda')) + "\n\n")
+            f.write(str(summary(gen_net, input_size=(1, config["network"]["generator"]['z_dim']),
+                                device='cuda')) + "\n\n")
             f.write("Discriminator Model Summary:\n")
             f.write("=" * 50 + "\n")
             if config['type'] == "tts":
-                f.write(str(summary(dis_net, input_size=(1, config["data"]["num_channels"], 1, config["data"]["seq_len"]), device='cuda')) + "\n\n")
+                f.write(str(summary(dis_net, input_size=(1, config["data"]["num_channels"],
+                                                         1, config["data"]["seq_len"]),
+                                                         device='cuda')) + "\n\n")
             else:
-                f.write(str(summary(dis_net, input_size=(1, config["data"]["seq_len"],config["data"]["num_channels"]), device='cuda')) + "\n\n")
+                f.write(str(summary(dis_net, input_size=(1, config["data"]["seq_len"],
+                                                         config["data"]["num_channels"]),
+                                                         device='cuda')) + "\n\n")
 
         mlflow_log_artifact(summary_file, None, config)
 
 
-def set_device():  # gen_net: nn.Module, dis_net: nn.Module):
-    # TODO add info about choosing GPU
+def set_device():
+    """Set Device"""
     if not torch.cuda.is_available():
         logger.info('Using CPU, this will be slow')
         device = torch.device("cpu")
     else:
         logger.info('Using default GPU')
         device = torch.device("cuda")
-   
+
     return device
 
 
 def weights_init(init_type: str, module: nn.Module):
-
+    """Init model weights"""
     if isinstance(module, (nn.Conv2d)):
         if init_type == "normal":
             nn.init.normal_(module.weight, 0.0, 0.02)
@@ -158,20 +170,18 @@ def weights_init(init_type: str, module: nn.Module):
         if module.bias is not None:
             nn.init.constant_(module.bias, 0.0)
         else:
-            logger.error(f"{init_type} unknown inital type")
+            logger.error("%s unknown initial type", init_type)
             raise NotImplementedError(f"{init_type} unknown inital type")
-        
-        logger.info(f"Network init with {init_type} type, Layer: {module}")
 
-    elif isinstance(module, ( nn.BatchNorm2d)):
+        logger.info("Network init with %s type, Layer: %s", init_type, module)
+    elif isinstance(module, (nn.BatchNorm2d)):
         nn.init.constant_(module.weight, 1.0)
         nn.init.constant_(module.bias, 0.0)
 
-        logger.info(f"Network init, Layer: {module}")
-    
-    
+        logger.info("Network init, Layer: %s", module)
+
+
 def convert_to_tsfresh_format(ts_array):
- 
     """
     Convert a 2D array of shape (num_sequences, sequence_length)
     to a DataFrame in tsfresh format: columns = ["id", "time", "value"]
@@ -186,6 +196,7 @@ def convert_to_tsfresh_format(ts_array):
 
 
 def flatten_dict(d, parent_key='', sep='_'):
+    """Flatten dict"""
     items = []
     for k, v in d.items():
         new_key = f"{parent_key}{sep}{k}" if parent_key else k
@@ -195,7 +206,9 @@ def flatten_dict(d, parent_key='', sep='_'):
             items.append((new_key, v))
     return dict(items)
 
+
 def copy_params(model, mode='cpu'):
+    """Copy params"""
     if mode == 'gpu':
         flatten = []
         for p in model.parameters():
@@ -205,21 +218,24 @@ def copy_params(model, mode='cpu'):
         flatten = deepcopy(list(p.data for p in model.parameters()))
     return flatten
 
+
 def load_params(model, new_param, args, mode="gpu"):
+    """Load params"""
     if mode == "cpu":
         for p, new_p in zip(model.parameters(), new_param):
             cpu_p = deepcopy(new_p)
 #             p.data.copy_(cpu_p.cuda().to(f"cuda:{args.gpu}"))
             p.data.copy_(cpu_p.cuda().to("cpu"))
             del cpu_p
-    
+
     else:
         for p, new_p in zip(model.parameters(), new_param):
             p.data.copy_(new_p)
 
-def set_validation_metric(val_metric: str) -> float:
-    logger.info(f"Validation metric used: {val_metric}")
 
+def set_validation_metric(val_metric: str) -> float:
+    """Set val metrics"""
+    logger.info("Validation metric used: %s", val_metric)   
     if val_metric in ["fid_score_statistic", "jensen_shannon_divergence", "fid_score_temporal"]:
         return float("inf")
     elif val_metric == "cosine_similarity":

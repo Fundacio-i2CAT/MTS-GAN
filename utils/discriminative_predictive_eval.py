@@ -1,17 +1,18 @@
-
+"""Predictive and Discriminative evaluation"""
+import os
+import mlflow
+import torch
 import numpy as np
-from LoadSynthetic import Synthetic_Generator
 import h5py
-import utils as ut
-from data.dataLoader import CustomDataset
 import predictive as pred
 import discriminative as disc
-import torch
-import mlflow
-import os
+import utils as ut
+from utils.load_synthetic import SyntheticGenerator
+from data.dataLoader import CustomDataset
 
 
-def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0.0.0.0:5004', run_id="f1bc0bef91394a86af291387a102a53a", epoch=-1):
+def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0.0.0.0:5004',
+                                         run_id="f1bc0bef91394a86af291387a102a53a", epoch=-1):
     """
     Gets config from artifacts in mlflow, reads real data from dataset in config,
     generates synthetic data and computes predictive and discriminative metrics.
@@ -22,7 +23,7 @@ def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0
                     "is_used": True,
                     "run_name": "ib-sh"
                     })
-    syn_generator = Synthetic_Generator(run_id=run_id, tracking_uri=tracking_uri, epoch=epoch)
+    syn_generator = SyntheticGenerator(run_id=run_id, tracking_uri=tracking_uri, epoch=epoch)
 
     config = ut.load_yaml(syn_generator.config)
     ut.mlflow_log_param("model", config["type"], None, config)
@@ -32,7 +33,7 @@ def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0
                "d_acc": [],
                }
 
-    for i in range(n_repetitions):
+    for _ in range(n_repetitions):
         mlflow.start_run(nested=True)
 
         with h5py.File(config['data']['dataset_path'], 'r') as f:
@@ -44,11 +45,14 @@ def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0
         validation_data = validation_data[:, :config["data"]["seq_len"], :]
         test_data = test_data[:, :config["data"]["seq_len"], :]
 
-        train_set = CustomDataset(train_data, norm=config['data']['normalization'])
-        validation_set = CustomDataset(validation_data, norm=config['data']['normalization'], stats=train_set.stats)
-        test_set = CustomDataset(test_data, norm=config['data']['normalization'], stats=train_set.stats)
-        
-        train = np.array([train_set[i] for i in range(len(train_set))])
+        train_set = CustomDataset(train_data,
+                                  norm=config['data']['normalization'])
+        validation_set = CustomDataset(validation_data,
+                                       norm=config['data']['normalization'], stats=train_set.stats)
+        test_set = CustomDataset(test_data,
+                                 norm=config['data']['normalization'], stats=train_set.stats)
+
+        _ = np.array([train_set[i] for i in range(len(train_set))])
         validation = np.array([validation_set[i] for i in range(len(validation_set))])
         test = np.array([test_set[i] for i in range(len(test_set))])
 

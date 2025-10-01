@@ -1,20 +1,23 @@
-import torch
-from tqdm import tqdm
-import numpy as np
+"""Validator"""
 import logging
-from torch.utils import data
-import matplotlib.pyplot as plt
 import os
 import shutil
 import tempfile
+import torch
+from tqdm import tqdm
+import numpy as np
+from torch.utils import data
+import matplotlib.pyplot as plt
+import pandas as pd
 import utils.metrics as metrics
 import utils.utils as ut
-import pandas as pd
+
 logger = logging.getLogger("DataLogger")
 
 
-def validate(gen_net: torch.nn.Module, validation_loader: data.DataLoader, config: dict, tracker: dict, device) -> dict:
-
+def validate(gen_net: torch.nn.Module, validation_loader: data.DataLoader,
+             config: dict, tracker: dict, device) -> dict:
+    """Main Validation loop"""
     gen_net.eval()
     real_samples = []
     fake_samples = []
@@ -22,7 +25,7 @@ def validate(gen_net: torch.nn.Module, validation_loader: data.DataLoader, confi
 
     with torch.no_grad():
 
-        for iter_idx, ts in enumerate(tqdm(validation_loader, desc="Validation Progress", unit="batch")):
+        for _, ts in enumerate(tqdm(validation_loader, desc="Validation Progress", unit="batch")):
             real_ts = ts.to(device, dtype=torch.float, non_blocking=True)
             z = torch.randn(ts.shape[0], config["network"]["generator"]["z_dim"], device=device)
             fake_ts = gen_net(z)
@@ -32,7 +35,7 @@ def validate(gen_net: torch.nn.Module, validation_loader: data.DataLoader, confi
 
             # real_ts (num_seq, feat, 1, len_seq)
             if config["type"] == "tts":
-            # Remove the singleton dimension and trasnpose -> (num_seq, len_seq,  feat)
+                # Remove the singleton dimension and trasnpose -> (num_seq, len_seq,  feat)
                 real_ts = real_ts.squeeze(2).transpose(0, 2, 1)
                 fake_ts = fake_ts.squeeze(2).transpose(0, 2, 1)
 
@@ -46,7 +49,7 @@ def validate(gen_net: torch.nn.Module, validation_loader: data.DataLoader, confi
         if "feature" not in key:
             ut.mlflow_log_metric(key, value, step=tracker['validation_global_step'], config=config)
     save_time_series_plot(generated_data, real_data, tracker['train_global_step'], config)
-    
+
     ut.mlflow_save_binary(generated_data, tracker['curr_epoch'], config)
 
     tracker['validation_global_step'] = global_steps + 1
@@ -55,27 +58,27 @@ def validate(gen_net: torch.nn.Module, validation_loader: data.DataLoader, confi
 
 
 def gen_plot(gen_net, epoch, config):
-
+    """Plot Generation"""
     synthetic_data = []
 
     device = next(gen_net.parameters()).device
 
-    for i in range(6):
+    for _ in range(6):
         fake_noise = torch.randn(1, config["network"]["generator"]["z_dim"], device=device)
         fake_sigs = gen_net(fake_noise).to('cpu').detach().numpy()
         synthetic_data.append(fake_sigs)
-        
+
     fig, axs = plt.subplots(2, 3, figsize=(15, 8))
     fig.suptitle(f'Synthetic samples at epoch {epoch}', fontsize=20)
 
-    for row, feature_index in enumerate(range(2)): 
-        for col in range(3): 
-         
-            data = synthetic_data[row * 3 + col]
+    for row, feature_index in enumerate(range(2)):
+        for col in range(3):
+
+            data_s = synthetic_data[row * 3 + col]
             if config["type"] == "tts":
-                feature_data = data[0, feature_index, 0, :] 
+                feature_data = data_s[0, feature_index, 0, :]
             else:
-                feature_data = data[0, :, feature_index]
+                feature_data = data_s[0, :, feature_index]
             axs[row, col].plot(feature_data)
             axs[row, col].set_title(f'Feature f{feature_index + 1}, Plot {col + 1}', fontsize=15)
             axs[row, col].set_xlabel('Time')
@@ -88,17 +91,17 @@ def gen_plot(gen_net, epoch, config):
     temp_filename = f"{epoch}_epoch.jpeg"
     tmpfile_path = os.path.join(temp_dir, temp_filename)
 
-    
     plt.savefig(tmpfile_path, format='jpeg')
     plt.clf()
     ut.mlflow_log_artifact(tmpfile_path, artifact_path="synthetic_signals", config=config)
     plt.close()
-    
+
     if os.path.exists(temp_dir):
         shutil.rmtree(temp_dir)
 
 
 def save_time_series_plot(array_generated, array_real, epoch, config):
+    """Generate and save time series plot"""
     os.makedirs("plots", exist_ok=True)
 
     df = pd.DataFrame({'time': np.arange(array_generated.shape[1])})
@@ -117,7 +120,6 @@ def save_time_series_plot(array_generated, array_real, epoch, config):
             for feat in range(array_generated.shape[2]):
                 axs[i, j].plot(df['time'], df[f'{key}{feat}_{i}'])
             axs[i, j].tick_params(axis='y', labelcolor='blue')
-
 
     temp_dir = tempfile.mkdtemp(prefix="extreme_xp_")
     os.makedirs(temp_dir, exist_ok=True)

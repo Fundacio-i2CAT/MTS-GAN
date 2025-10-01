@@ -1,11 +1,13 @@
+"""Ones step ahead forecasting"""
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
-import numpy as np
 from sklearn.metrics import mean_squared_error
 
 
 class LSTMModel(nn.Module):
+    """LSTM for Forecasting one step ahead"""
     def __init__(self, input_dim, hidden_dim, num_layers):
         super(LSTMModel, self).__init__()
         # LSTM layer
@@ -14,8 +16,8 @@ class LSTMModel(nn.Module):
         self.fc = nn.Linear(hidden_dim, input_dim)
 
     def forward(self, x):
-
-        out, (hn, cn) = self.lstm(x)
+        """Forward func"""
+        out, (hn, _) = self.lstm(x)
 
         # We only need the output from the last time step
         out = self.fc(hn[-1, :, :])
@@ -55,10 +57,10 @@ def predictive_score_metrics(real_data, generated_data, device):
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     print("Starting training...")
     for epoch in range(iterations):
-        for X_batch, y_batch in train_loader:
-            X_batch, y_batch = X_batch.to(device), y_batch.to(device)
+        for x_batch, y_batch in train_loader:
+            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
             optimizer.zero_grad()
-            predictions = model(X_batch)
+            predictions = model(x_batch)
             loss = criterion(predictions, y_batch.unsqueeze(1))
             loss.backward()
             optimizer.step()
@@ -70,9 +72,9 @@ def predictive_score_metrics(real_data, generated_data, device):
     all_predictions = []
     all_targets = []
     with torch.no_grad():
-        for X_batch, y_batch in test_loader:
-            X_batch = X_batch.to(device)
-            predictions = model(X_batch)
+        for x_batch, y_batch in test_loader:
+            x_batch = x_batch.to(device)
+            predictions = model(x_batch)
             all_predictions.append(predictions.cpu().numpy())
             all_targets.append(y_batch.cpu().numpy())
 
@@ -82,16 +84,3 @@ def predictive_score_metrics(real_data, generated_data, device):
     mse = mean_squared_error(targets_tensor, predictions_tensor)
 
     return mse
-
-
-if __name__ == '__main__':
-
-    real_data = np.random.rand(10, 300, 2)
-    generated_data = np.random.rand(10, 300, 2)
-
-    # Choose device
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-    # Run the metrics calculation
-    predictive_mae = predictive_score_metrics(real_data, generated_data, device)
-    print(f"Predictive MAE: {predictive_mae}")

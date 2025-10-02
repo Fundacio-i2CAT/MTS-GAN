@@ -1,15 +1,17 @@
+"""Evaluation MEtrics"""
 import numpy as np
+import pandas as pd
 from scipy.linalg import sqrtm
-from sklearn.metrics.pairwise import cosine_similarity
 from scipy.spatial.distance import cdist
-from tsfresh.feature_extraction import extract_features, MinimalFCParameters
+from tsfresh.feature_extraction import extract_features
+from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics import mean_squared_error
 from tsfeatures import tsfeatures
-import pandas as pd
 import utils.utils as ut
 
 
 def compute_mse(real_data, recovered_data) -> dict:
+    """MSE"""
     metrics = {}
 
     n_samples = real_data.shape[0]
@@ -46,13 +48,14 @@ def average_fid_score(real_features, fake_features):
 
 
 def average_cosine_similarity(real_signals, synthetic_signals):
-
+    """CS"""
     similarities = cosine_similarity(synthetic_signals, real_signals)
     mean_similarities = np.mean(similarities, axis=1)
     return np.mean(mean_similarities)
 
 
 def average_jensen_shannon_distance(real_signals, synthetic_signals):
+    """JSD"""
     real_arr = np.array(real_signals)
     synthetic_arr = np.array(synthetic_signals)
 
@@ -75,7 +78,7 @@ def normalize_for_jsd(seq):
 
 
 def compute_statistic_metrics(real_signals, synthetic_signals):
-    # Metrics to computed with statistics extracted from each signal
+    """Metrics to computed with statistics extracted from each signal"""
     tsfresh_settings = {"median": None,
                         "mean": None,
                         "standard_deviation": None,
@@ -97,23 +100,30 @@ def compute_statistic_metrics(real_signals, synthetic_signals):
     )
 
     metrics = {"fid_statistic": average_fid_score(real_features.values, synthetic_features.values),
-               "jensen_shannon_statistic": average_jensen_shannon_distance(real_features.values, synthetic_features.values),
-               "cosine_similarity_statistic": average_cosine_similarity(real_features.values, synthetic_features.values)}
+               "jensen_shannon_statistic": average_jensen_shannon_distance(real_features.values,
+                                                                           synthetic_features.values),
+               "cosine_similarity_statistic": average_cosine_similarity(real_features.values,
+                                                                        synthetic_features.values)}
 
     return metrics
 
 
 def compute_features_metrics(real_signals, synthetic_signals):
-
-
+    """ FEatures """
     real_feature_df = ut.convert_to_tsfresh_format(real_signals)
-    real_feature_df.rename(columns={'id': 'unique_id', 'time':'ds', 'value':'y'}, inplace=True)
-    real_feature_df['ds'] = np.tile(pd.date_range(start='2023-01-01', periods=real_signals.shape[1], freq='D'), real_signals.shape[0])
+    real_feature_df.rename(columns={'id': 'unique_id', 'time': 'ds', 'value': 'y'},
+                           inplace=True)
+    real_feature_df['ds'] = np.tile(pd.date_range(start='2023-01-01',
+                                                  periods=real_signals.shape[1],
+                                                  freq='D'), real_signals.shape[0])
 
     synthetic_feature_df = ut.convert_to_tsfresh_format(synthetic_signals)
-    synthetic_feature_df.rename(columns={'id': 'unique_id', 'time':'ds', 'value':'y'}, inplace=True)
-    synthetic_feature_df['ds'] = np.tile(pd.date_range(start='2023-01-01', periods=synthetic_signals.shape[1], freq='D'), real_signals.shape[0])
-    
+    synthetic_feature_df.rename(columns={'id': 'unique_id', 'time': 'ds', 'value': 'y'},
+                                inplace=True)
+    synthetic_feature_df['ds'] = np.tile(pd.date_range(start='2023-01-01',
+                                                       periods=synthetic_signals.shape[1],
+                                                       freq='D'), real_signals.shape[0])
+
     real_feat = tsfeatures(real_feature_df)
     real_feat = real_feat.fillna(0)
     real_feat = real_feat.drop(columns=["unique_id"])
@@ -128,8 +138,9 @@ def compute_features_metrics(real_signals, synthetic_signals):
 
     return metrics
 
+
 def compute_metrics(real_data, synthetic_data):
-    # shape (num_seq, seq_len, features)
+    """shape (num_seq, seq_len, features)"""
     real_data, synthetic_data = np.array(real_data), np.array(synthetic_data)
 
     metrics = {}

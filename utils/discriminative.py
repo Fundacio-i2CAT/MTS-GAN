@@ -1,12 +1,13 @@
+"""Discriminator"""
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
 
 class LSTMModelDiscriminator(nn.Module):
+    """LSTM Discriminator"""
     def __init__(self, input_dim, hidden_dim, num_layers):
         super(LSTMModelDiscriminator, self).__init__()
         # LSTM layer
@@ -15,8 +16,8 @@ class LSTMModelDiscriminator(nn.Module):
         self.fc = nn.Linear(hidden_dim, 1)
 
     def forward(self, x):
-
-        out, (hn, cn) = self.lstm(x)
+        """Forward Func"""
+        out, (hn, _) = self.lstm(x)
 
         # We only need the output from the last time step
         out = self.fc(hn[-1, :, :])
@@ -51,7 +52,7 @@ def discriminative_score_metrics(real_data_val, real_data_test, generated_data, 
 
     test_real_x = torch.tensor(real_data_test, dtype=torch.float32)
     test_real_y = torch.ones(len(real_data_test))
-    
+
     combined_x = torch.cat((first_half_x, real_x), dim=0).numpy()
     combined_y = torch.cat((first_half_y, real_y), dim=0).numpy()
 
@@ -103,18 +104,3 @@ def discriminative_score_metrics(real_data_val, real_data_test, generated_data, 
     discriminative_score = np.abs(0.5 - acc)
 
     return acc, discriminative_score
-
-
-if __name__ == '__main__':
-
-    real_data_val = np.random.rand(10, 300, 2)
-    real_data_test = np.random.rand(10, 300, 2)
-
-    generated_data = np.random.rand(10, 300, 2)
-
-    # Choose device
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-    # Run the metrics calculation
-    disc_score = discriminative_score_metrics(real_data_val, real_data_test, generated_data, device)
-    print(f"acc, disc_score: {disc_score}")

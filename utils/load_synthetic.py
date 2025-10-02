@@ -1,20 +1,21 @@
-# Class for inference and create samples
-# Made them to a Pytorch Dataset 
-import numpy as np
-import pandas as pd
+"""Class for inference and create samples
+Made them to a Pytorch Dataset
+"""
+import re
 import os
 import gc
+import numpy as np
+import pandas as pd
+import mlflow
 import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import Dataset
 from architecture.model import ModelFactory
 import utils as ut
-import mlflow
-import re
-from torch.utils import data
 
 
-class Synthetic_Generator(Dataset):
+class SyntheticGenerator(Dataset):
+    """ Synthetic data generation"""
     def __init__(self,
                  run_id='f1bc0bef91394a86af291387a102a53a',
                  tracking_uri='http://0.0.0.0:5003',
@@ -31,13 +32,15 @@ class Synthetic_Generator(Dataset):
         self.config = ut.load_yaml(self.config)
         self.gen_net, _ = ModelFactory.create_model(self.config)
 
-        #self.gen_net = self.gen_net(self.gen_ckp['model_config']['generator'])
+        # self.gen_net = self.gen_net(self.gen_ckp['model_config']['generator'])
         self.gen_net.load_state_dict(self.gen_ckp['gen_state_dict'])
-        
+
         self.device = ut.set_device()
         self.gen_net.to(self.device)
+        self.syn_sample = None
 
     def generate_samples(self, samples: int):
+        """Generate Samples"""
         z = torch.FloatTensor(np.random.normal(0, 1, (samples, 100))).to(self.device)
         self.syn_sample = self.gen_net(z)
         self.syn_sample = self.syn_sample.detach().cpu().numpy()
@@ -92,7 +95,7 @@ class Synthetic_Generator(Dataset):
 
 
 def save_time_series_plot(array, plot_name, plot_save_path):
-
+    """Save time series data plot"""
     n_features = array.shape[-1]
     seq_len = array.shape[-2]
 
@@ -101,7 +104,7 @@ def save_time_series_plot(array, plot_name, plot_save_path):
     col = df.columns
     df['time'] = np.arange(seq_len)
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    _, ax = plt.subplots(figsize=(10, 6))
     for i in col:
         ax.plot(df['time'], df[i], label=i)
 
@@ -120,27 +123,3 @@ def save_time_series_plot(array, plot_name, plot_save_path):
     plt.close('all')
     gc.collect()
 
-
-def generate_synthetic_data(num_samples, tracking_uri='http://0.0.0.0:5004', run_id="f1bc0bef91394a86af291387a102a53a"):
-
-    syn_generator = Synthetic_Generator(run_id=run_id, tracking_uri=tracking_uri)
-    syn_samples = syn_generator.generate_samples(num_samples)
-
-    return syn_samples
-
-if __name__ == "__main__":
-
-    plot_save_path = "plots"
-    os.makedirs(plot_save_path, exist_ok=True)
-    runid = "835eec7b1cbe41448a51033ff28ebfc9"
-    runid = "7a6a9a2a649949bba2769656155e3997"
-
-    # Generate and save synthetic data
-    syn_data = generate_synthetic_data(10, run_id=runid)
-    if len(syn_data.shape) >= 4:
-        syn_data = syn_data.squeeze(2)
-        syn_data = syn_data.transpose(0, 2, 1)
-    syn_data_loader = data.DataLoader(syn_data, batch_size=1, num_workers=1, shuffle=False)
-    # Plot and save each category
-    for i, sig in enumerate(syn_data_loader):
-        save_time_series_plot(sig, f"syn_sample_{i+1}", plot_save_path)

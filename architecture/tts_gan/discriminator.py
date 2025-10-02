@@ -1,15 +1,14 @@
+"""TTS GAN Discriminator"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
-import math
-import numpy as np
-
-from torchvision.transforms import Compose, Resize, ToTensor
-from einops import rearrange, reduce, repeat
+from einops import rearrange, repeat
 from einops.layers.torch import Rearrange, Reduce
 
-class Dis_TransformerEncoderBlock(nn.Sequential):
+
+class DisTransformerEncoderBlock(nn.Sequential):
+    """Discriminator Transformer Encoder Block"""
     def __init__(self,
                  emb_size=100,
                  num_heads=10,
@@ -31,12 +30,14 @@ class Dis_TransformerEncoderBlock(nn.Sequential):
             ))
 
 
-class Dis_TransformerEncoder(nn.Sequential):
+class DisTransformerEncoder(nn.Sequential):
+    """Discriminator Transformer Encoder block"""
     def __init__(self, depth=8, **kwargs):
-        super().__init__(*[Dis_TransformerEncoderBlock(**kwargs) for _ in range(depth)])
-        
-        
+        super().__init__(*[DisTransformerEncoderBlock(**kwargs) for _ in range(depth)])
+
+
 class ClassificationHead(nn.Sequential):
+    """Classification head"""
     def __init__(self, emb_size=100, n_classes=2):
         super().__init__()
         self.clshead = nn.Sequential(
@@ -45,13 +46,15 @@ class ClassificationHead(nn.Sequential):
             nn.Linear(emb_size, n_classes)
         )
 
-    def forward(self, x):
-        out = self.clshead(x)
+    def forward(self, input):
+        """Forward func"""
+        out = self.clshead(input)
         return out
 
-    
-class PatchEmbedding_Linear(nn.Module):
-    #  what are the proper parameters set here?
+
+class PatchEmbeddingLinear(nn.Module):
+    """PatchEmbedding_Linear"""
+    # what are the proper parameters set here?
     def __init__(self, in_channels=21, patch_size=16, emb_size=100, seq_length=1024):
         # self.patch_size = patch_size
         super().__init__()
@@ -64,18 +67,19 @@ class PatchEmbedding_Linear(nn.Module):
         self.positions = nn.Parameter(torch.randn((seq_length // patch_size) + 1, emb_size))
 
     def forward(self, x: Tensor) -> Tensor:
+        """Forward func"""
         b, _, _, _ = x.shape
         x = self.projection(x)
         cls_tokens = repeat(self.cls_token, '() n e -> b n e', b=b)
-        #prepend the cls token to the input
+        # prepend the cls token to the input
         x = torch.cat([cls_tokens, x], dim=1)
         # position
         x += self.positions
-        return x        
-        
-        
-class Discriminator(nn.Sequential):
+        return x
 
+
+class Discriminator(nn.Sequential):
+    """Discriminator"""
     def __init__(self, config: dict):
         super().__init__()
         in_channels = config.get("in_channels", 2)
@@ -86,17 +90,19 @@ class Discriminator(nn.Sequential):
         n_classes = config.get("n_classes", 1)
         forward_drop_p = config.get("forward_drop_p", 0.5)
         drop_p = config.get("drop_p", 0.5)
- 
-        self.patch_embedding = PatchEmbedding_Linear(in_channels, patch_size, emb_size, seq_length)
-        self.transformer_encoder = Dis_TransformerEncoder(depth, emb_size=emb_size, drop_p=drop_p, forward_drop_p=forward_drop_p)
+
+        self.patch_embedding = PatchEmbeddingLinear(in_channels, patch_size, emb_size, seq_length)
+        self.transformer_encoder = DisTransformerEncoder(depth, emb_size=emb_size, drop_p=drop_p,
+                                                         forward_drop_p=forward_drop_p)
         self.classification_head = ClassificationHead(emb_size, n_classes)
- 
+
         self.add_module("patch_embedding", self.patch_embedding)
         self.add_module("transformer_encoder", self.transformer_encoder)
         self.add_module("classification_head", self.classification_head)
 
 
 class MultiHeadAttention(nn.Module):
+    """MultiHeadAttention"""
     def __init__(self, emb_size, num_heads, dropout):
         super().__init__()
         self.emb_size = emb_size
@@ -108,10 +114,11 @@ class MultiHeadAttention(nn.Module):
         self.projection = nn.Linear(emb_size, emb_size)
 
     def forward(self, x: Tensor, mask: Tensor = None) -> Tensor:
+        """Forward func"""
         queries = rearrange(self.queries(x), "b n (h d) -> b h n d", h=self.num_heads)
         keys = rearrange(self.keys(x), "b n (h d) -> b h n d", h=self.num_heads)
         values = rearrange(self.values(x), "b n (h d) -> b h n d", h=self.num_heads)
-        energy = torch.einsum('bhqd, bhkd -> bhqk', queries, keys)  # batch, num_heads, query_len, key_len
+        energy = torch.einsum('bhqd, bhkd -> bhqk', queries, keys)
         if mask is not None:
             fill_value = torch.finfo(torch.float32).min
             energy.mask_fill(~mask, fill_value)
@@ -124,20 +131,23 @@ class MultiHeadAttention(nn.Module):
         out = self.projection(out)
         return out
 
-    
+
 class ResidualAdd(nn.Module):
+    """ResidualAdd"""
     def __init__(self, fn):
         super().__init__()
         self.fn = fn
 
     def forward(self, x, **kwargs):
+        """Forward func"""
         res = x
         x = self.fn(x, **kwargs)
         x += res
         return x
-    
-    
+
+
 class FeedForwardBlock(nn.Sequential):
+    """FeedForwardBlock"""
     def __init__(self, emb_size, expansion, drop_p):
         super().__init__(
             nn.Linear(emb_size, expansion * emb_size),
@@ -145,4 +155,3 @@ class FeedForwardBlock(nn.Sequential):
             nn.Dropout(drop_p),
             nn.Linear(expansion * emb_size, emb_size),
         )
-  

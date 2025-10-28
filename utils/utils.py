@@ -134,7 +134,7 @@ def mlflow_log_summary(gen_net, dis_net, config):
                                 device='cuda')) + "\n\n")
             f.write("Discriminator Model Summary:\n")
             f.write("=" * 50 + "\n")
-            if config['type'] == "tts":
+            if config['type'] == "tts-gan":
                 f.write(str(summary(dis_net, input_size=(1, config["data"]["num_channels"],
                                                          1, config["data"]["seq_len"]),
                                                          device='cuda')) + "\n\n")

@@ -34,7 +34,7 @@ def validate(gen_net: torch.nn.Module, validation_loader: data.DataLoader,
             fake_ts = fake_ts.cpu().numpy()
 
             # real_ts (num_seq, feat, 1, len_seq)
-            if config["type"] == "tts":
+            if config["type"] == "tts-gan":
                 # Remove the singleton dimension and trasnpose -> (num_seq, len_seq,  feat)
                 real_ts = real_ts.squeeze(2).transpose(0, 2, 1)
                 fake_ts = fake_ts.squeeze(2).transpose(0, 2, 1)
@@ -75,7 +75,7 @@ def gen_plot(gen_net, epoch, config):
         for col in range(3):
 
             data_s = synthetic_data[row * 3 + col]
-            if config["type"] == "tts":
+            if config["type"] == "tts-gan":
                 feature_data = data_s[0, feature_index, 0, :]
             else:
                 feature_data = data_s[0, :, feature_index]

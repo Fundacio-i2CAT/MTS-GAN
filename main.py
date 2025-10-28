@@ -41,7 +41,7 @@ def main(args: Namespace):
     validation_set = CustomDataset(validation_data, norm=config['data']['normalization'],
                                    stats=train_set.stats)
 
-    if config["type"] == "tts":
+    if config["type"] == "tts-gan":
         def add_extra_dim(batch):
             # Transpose to (num_samples, num_channels, max_rows)
             batch = np.transpose(batch, (0, 2, 1))

@@ -60,7 +60,7 @@ def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0
 
         extra_samples = syn_generator.generate_samples(len(test_set))
 
-        if config["type"] == "tts":
+        if config["type"] == "tts-gan":
             syn_samples = syn_samples.squeeze(2)
             syn_samples = syn_samples.transpose(0, 2, 1)
             extra_samples = extra_samples.squeeze(2)

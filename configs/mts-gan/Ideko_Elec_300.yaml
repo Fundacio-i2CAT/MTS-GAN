@@ -1,0 +1,78 @@
+data:
+  dataset_path: /data/extremexp/extremexp_data/ideko/not_anomalous_3periods_3subsampling_6000seqLen.h5
+  debug: false
+  normalization: global_min_max
+  num_channels: 2
+  random_seed: 12345
+  seq_len: 6000
+  split_proportion: 0.2
+  val_score: fid_score_temporal
+  verbose: false
+mlflow:
+  URI: http://0.0.0.0:5004
+  experiment_id: ttsmamba_ideko_na_6000
+  is_used: true
+  run_name: xp_da
+network:
+  discriminator:
+    channels: 2
+    d_conv: 2
+    d_state: 256
+    e_fact: 1
+    hidden_dim: 128
+    num_layers: 1
+    seq_len: 6000
+    z_dim: 100
+  generator:
+    channels: 2
+    d_conv: 4
+    d_state: 256
+    e_fact: 2
+    ema: 0.99999
+    hidden_dim: 128
+    num_layers: 3
+    seq_len: 6000
+    z_dim: 100
+  init_type: xavier_uniform
+trainer:
+  batch_size: 64
+  d_accumulated_times: 1
+  d_lr: 0.0001
+  early_stopping: 50
+  epochs: 500
+  g_accumulated_times: 1
+  g_lr: 0.0003
+  loss:
+    d_loss:
+      loss_name: lsgan
+    g_loss:
+      loss_name: lsgan
+      wgangp:
+        phi: 5
+  n_critic: 1
+  optimizer:
+    adam:
+      beta1: 0.9
+      beta2: 0.999
+    adamw:
+      weight_decay: 0.01
+    optimizer_name: adam
+  scheduler:
+    d_scheduler:
+      exponential:
+        emma: 0.999
+      linear:
+        end_factor: 0.1
+        star_factor: 1.0
+      scheduler_name: linear
+    g_scheduler:
+      exponential:
+        gamma: 0.999
+      linear:
+        end_factor: 0.1
+        star_factor: 1.0
+      scheduler_name: linear
+type: mamba
+validator:
+  batch_size: 64
+  val_freq: 10

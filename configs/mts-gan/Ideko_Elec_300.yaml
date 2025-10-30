@@ -1,16 +1,16 @@
 data:
-  dataset_path: /data/extremexp/extremexp_data/ideko/not_anomalous_3periods_3subsampling_6000seqLen.h5
+  dataset_path: /data/extremexp/extremexp_data/ideko/electrical_anomalies_filtered_3periods_60subsampling_300seqLen.h5
   debug: false
   normalization: global_min_max
   num_channels: 2
   random_seed: 12345
-  seq_len: 6000
+  seq_len: 300
   split_proportion: 0.2
   val_score: fid_score_temporal
   verbose: false
 mlflow:
   URI: http://0.0.0.0:5004
-  experiment_id: ttsmamba_ideko_na_6000
+  experiment_id: ttsmamba_ideko_elec_300
   is_used: true
   run_name: xp_da
 network:
@@ -19,19 +19,19 @@ network:
     d_conv: 2
     d_state: 256
     e_fact: 1
-    hidden_dim: 128
+    hidden_dim: 512
     num_layers: 1
-    seq_len: 6000
+    seq_len: 300
     z_dim: 100
   generator:
     channels: 2
-    d_conv: 4
+    d_conv: 2
     d_state: 256
-    e_fact: 2
+    e_fact: 1
     ema: 0.99999
-    hidden_dim: 128
+    hidden_dim: 512
     num_layers: 3
-    seq_len: 6000
+    seq_len: 300
     z_dim: 100
   init_type: xavier_uniform
 trainer:
@@ -72,7 +72,6 @@ trainer:
         end_factor: 0.1
         star_factor: 1.0
       scheduler_name: linear
-type: mamba
 validator:
   batch_size: 64
   val_freq: 10

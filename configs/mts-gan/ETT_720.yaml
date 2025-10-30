@@ -1,37 +1,37 @@
 data:
-  dataset_path: /data/extremexp/extremexp_data/ideko/not_anomalous_3periods_60subsampling_300seqLen.h5
+  dataset_path: /data/extremexp/extremexp_data/ETT/ETTh1_seq_len720_overlap710.h5
   debug: false
   normalization: global_min_max
-  num_channels: 2
+  num_channels: 6
   random_seed: 12345
-  seq_len: 300
+  seq_len: 720
   split_proportion: 0.2
   val_score: fid_score_temporal
   verbose: false
 mlflow:
   URI: http://0.0.0.0:5004
-  experiment_id: ttsmamba_ideko_na_300
+  experiment_id: ttsmamba_ett720
   is_used: true
   run_name: xp_da
 network:
   discriminator:
-    channels: 2
+    channels: 6
     d_conv: 2
-    d_state: 256
+    d_state: 128
     e_fact: 1
-    hidden_dim: 512
+    hidden_dim: 256
     num_layers: 1
-    seq_len: 300
+    seq_len: 720
     z_dim: 100
   generator:
-    channels: 2
-    d_conv: 2
-    d_state: 256
-    e_fact: 1
+    channels: 6
+    d_conv: 4
+    d_state: 128
+    e_fact: 2
     ema: 0.99999
-    hidden_dim: 512
-    num_layers: 3
-    seq_len: 300
+    hidden_dim: 256
+    num_layers: 1
+    seq_len: 720
     z_dim: 100
   init_type: xavier_uniform
 trainer:

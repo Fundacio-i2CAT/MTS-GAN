@@ -1,37 +1,37 @@
 data:
-  dataset_path: /data/extremexp/extremexp_data/ETT/ETTh1_seq_len720_overlap710.h5
+  dataset_path: /data/extremexp/extremexp_data/ETT/ETTh1_seq_len336_overlap326.h5
   debug: false
   normalization: global_min_max
   num_channels: 6
   random_seed: 12345
-  seq_len: 720
+  seq_len: 336
   split_proportion: 0.2
   val_score: fid_score_temporal
   verbose: false
 mlflow:
   URI: http://0.0.0.0:5004
-  experiment_id: ttsmamba_ett720
+  experiment_id: ttsmamba_ett336
   is_used: true
   run_name: xp_da
 network:
   discriminator:
     channels: 6
     d_conv: 2
-    d_state: 128
+    d_state: 256
     e_fact: 1
     hidden_dim: 256
     num_layers: 1
-    seq_len: 720
+    seq_len: 336
     z_dim: 100
   generator:
     channels: 6
     d_conv: 4
-    d_state: 128
+    d_state: 256
     e_fact: 2
     ema: 0.99999
     hidden_dim: 256
     num_layers: 1
-    seq_len: 720
+    seq_len: 336
     z_dim: 100
   init_type: xavier_uniform
 trainer:

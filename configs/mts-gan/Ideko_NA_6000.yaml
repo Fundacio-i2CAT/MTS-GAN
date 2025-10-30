@@ -1,5 +1,5 @@
 data:
-  dataset_path: /data/extremexp/extremexp_data/ideko/electrical_anomalies_filtered_3periods_3subsampling_6000seqLen.h5
+  dataset_path: /data/extremexp/extremexp_data/ideko/not_anomalous_3periods_3subsampling_6000seqLen.h5
   debug: false
   normalization: global_min_max
   num_channels: 2
@@ -10,7 +10,7 @@ data:
   verbose: false
 mlflow:
   URI: http://0.0.0.0:5004
-  experiment_id: ttsmamba_ideko_elec_6000
+  experiment_id: ttsmamba_ideko_na_6000
   is_used: true
   run_name: xp_da
 network:
@@ -25,9 +25,9 @@ network:
     z_dim: 100
   generator:
     channels: 2
-    d_conv: 2
+    d_conv: 4
     d_state: 256
-    e_fact: 1
+    e_fact: 2
     ema: 0.99999
     hidden_dim: 128
     num_layers: 3

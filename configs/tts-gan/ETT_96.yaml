@@ -1,0 +1,79 @@
+data:
+  dataset_path: /data/datasets_ori/ETT/ETTh1_seq_len96_overlap86.h5
+  debug: false
+  normalization: global_min_max
+  num_channels: 6
+  random_seed: 12345
+  seq_len: 96
+  split_proportion: 0.2
+  val_score: fid_score_statistic
+  verbose: false
+mlflow:
+  URI: http://0.0.0.0:5003
+  experiment_id: ETTh1_96_tts
+  is_used: true
+  run_name: ETTh1
+network:
+  discriminator:
+    depth: 3
+    drop_p: 0.5
+    emb_size: 150
+    forward_drop_p: 0.5
+    in_channels: 6
+    n_classes: 1
+    patch_size: 2
+    seq_length: 96
+  generator:
+    attn_drop_rate: 0.5
+    channels: 6
+    depth: 3
+    ema: 0.99999
+    embed_dim: 150
+    forward_drop_rate: 0.5
+    latent_dim: 100
+    num_heads: 5
+    patch_size: 2
+    seq_len: 96
+  init_type: xavier_uniform
+trainer:
+  batch_size: 32
+  d_accumulated_times: 1
+  d_lr: 0.0001
+  early_stopping: 15
+  epochs: 1001
+  g_accumulated_times: 1
+  g_lr: 0.0001
+  loss:
+    d_loss:
+      loss_name: lsgan
+    g_loss:
+      loss_name: lsgan
+      wgangp:
+        phi: 5
+  n_critic: 1
+  optimizer:
+    adam:
+      beta1: 0.9
+      beta2: 0.999
+    adamw:
+      weight_decay: 0.01
+    optimizer_name: adam
+  scheduler:
+    d_scheduler:
+      exponential:
+        emma: 0.999
+      linear:
+        end_factor: 0.1
+        star_factor: 1.0
+      scheduler_name: linear
+    g_scheduler:
+      exponential:
+        gamma: 0.999
+      linear:
+        end_factor: 0.1
+        star_factor: 1.0
+      scheduler_name: linear
+validator:
+  batch_size: 32
+  val_freq: 20
+type: tts-gan

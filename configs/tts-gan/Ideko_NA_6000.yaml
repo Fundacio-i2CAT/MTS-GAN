@@ -76,3 +76,4 @@ trainer:
 validator:
   batch_size: 32
   val_freq: 20
+type: tts-gan

@@ -1,4 +1,4 @@
-type: "tts"
+type: "tts-gan"
 
 data:
   dataset_path: /data/extremexp/extremexp_data/ideko/not_anomalous_3periods_60subsampling_300seqLen.h5

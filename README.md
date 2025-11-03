@@ -26,22 +26,38 @@ MTS-GAN has been evaluated on two open-source datasets, resulting in five differ
    By default, MLflow will start at http://localhost:5000, if the is changed please change it too in the config.yaml
 
 ## Usage
-1. Datasets  
-   Place datasets in the `data/` directory.  
-   The expected data format is:
-   ```
-   [num_sequences, sequence_length, num_features]
-   ```
-    And parquet format is required.
+1. Datasets
+   - Place your datasets in the `data/` directory.
+   - The expected data format is:
+     [num_sequences, sequence_length, num_features]
+     and the files must be in Parquet format.
+
+   - To use the ETT dataset:
+     1. Download the raw dataset from the GitHub repository: [ETTh1](https://github.com/zhouhaoyi/ETDataset/blob/main/ETT-small/ETTh1.csv)
+     2. Place it under:
+        data/ETT/ETT_raw/
+     3. Then run the processing script:
+        python3 data/ett_processing.py
+ 
+   - To use the UniMiB‑SHAR dataset:
+     1. Download the raw dataset from:
+        [UniMiB‑SHAR](https://www.sal.disco.unimib.it/technologies/unimib-shar/)
+        or from [Kaggle] (https://www.kaggle.com/datasets/alirezacman/unimib-shar)
+     2. Place it under:
+        data/UniMiB‑SHAR/UniMiB‑SHAR_raw/
+     3. Then run the processing script:
+        python3 data/unimib_processing.py
+
+   - These scripts will convert and save the datasets into the correct format for training your network.
 
 2. Configurations  
    10 experimental configurations are provided in the `configs/` directory.  5 for MTS-GAN and 5 for TTS-GAN
-   Example YAML configuration: `configs/config_ett96.yaml`
+   Example YAML configuration: `configs/mts-gan/ETT_96.yaml`
 
 3. Training  
    To train a model, execute:
    ```bash
-   python3 main.py --config configs/config_ett96.yaml
+   python3 main.py --config configs/mts-gan/ETT_96.yaml
    ```
 4. Inference
    To make inference of a model:
@@ -68,13 +84,28 @@ MTS-GAN/
 
 
 ## Authors and Acknowledgment
-Developed by Santiago Escuder (I2CAT Foundation).  
+Developed by Santiago Escuder Folch (I2CAT Foundation) and Oriol Graupera-Serra (I2CAT Foundation).  
 Acknowledgments to the authors of the [TTS-GAN](https://github.com/imics-lab/tts-gan) and [Mamba](https://github.com/state-spaces/mamba) repositories for their foundational contributions and open-source releases, which served as the basis for this implementation.
 
 
-## License
-This project is licensed under the MIT License. See the LICENSE file for details.
+# Source
+This code has been developed within the ExtremeXP project (EXPerimentation driven and user eXPerience oriented analytics for eXtremely Precise outcomes and decisions), 
+which has received funding from the European Union’s Horizon Europe research and innovation programme under Grant Agreement No. 101093164.
 
+More information about the project is available at: https://cordis.europa.eu/project/id/101093164/reporting
+
+# Copyright
+This code has been developed by Fundació Privada Internet i Innovació Digital a Catalunya (i2CAT).
+i2CAT is a *non-profit research and innovation centre* that  promotes mission-driven knowledge to solve business challenges, co-create solutions with a transformative impact, empower citizens through open and participative digital social innovation with territorial capillarity, and promote pioneering and strategic initiatives.
+i2CAT *aims to transfer* research project results to private companies in order to create social and economic impact via the out-licensing of intellectual property and the creation of spin-offs.
+Find more information of i2CAT projects and IP rights at https://i2cat.net/tech-transfer/
+
+# License
+This code is licensed under the terms GNU Affero General Public License v3.0 (*AGPLv3*). Information about the license can be located at [link](https://www.gnu.org/licenses/agpl-3.0.html).
+If you find that this license doesn't fit with your requirements regarding the use, distribution or redistribution of our code for your specific work, please, don’t hesitate to contact the intellectual property managers in i2CAT at the following address: techtransfer@i2cat.net
+ 
 ## Support
 For questions, issues, or collaboration inquiries, please contact:  
-santiago@escuder.i2cat.net
+santiago.escuder@i2cat.net
+oriol.graupera@i2cat.net
+albert.calvo@i2cat.net

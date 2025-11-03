@@ -1,5 +1,7 @@
 alembic==1.16.4
 annotated-types==0.7.0
+antropy==0.1.9
+arch==8.0.0
 blinker==1.9.0
 cachetools==5.5.2
 certifi==2025.8.3
@@ -83,12 +85,14 @@ rsa==4.9.1
 safetensors==0.6.1
 scikit-learn==1.7.1
 scipy==1.15.3
+setuptools==80.9.0
 six==1.17.0
 smmap==5.0.2
 SQLAlchemy==2.0.42
 sqlparse==0.5.3
 statsmodels==0.14.5
 stumpy==1.13.0
+supersmoother==0.4
 sympy==1.14.0
 threadpoolctl==3.6.0
 tokenizers==0.21.4
@@ -98,6 +102,7 @@ torchinfo==1.8.0
 tqdm==4.67.1
 transformers==4.55.0
 triton==3.4.0
+tsfeatures==0.4.5
 tsfresh==0.21.0
 typing-inspection==0.4.1
 typing_extensions==4.14.1

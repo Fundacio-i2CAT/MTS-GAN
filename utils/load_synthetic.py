@@ -18,7 +18,7 @@ class SyntheticGenerator(Dataset):
     """ Synthetic data generation"""
     def __init__(self,
                  run_id='f1bc0bef91394a86af291387a102a53a',
-                 tracking_uri='http://0.0.0.0:5003',
+                 tracking_uri='http://0.0.0.0:5000',
                  epoch=-1
                  ):
 

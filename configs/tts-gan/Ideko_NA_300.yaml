@@ -9,8 +9,8 @@ data:
   val_score: jensen_shannon_divergence
   verbose: false
 mlflow:
-  URI: http://0.0.0.0:5003
-  experiment_id: ideko_tts_not_anomalous
+  URI: http://0.0.0.0:5000
+  experiment_id: tts-gan
   is_used: true
   run_name: o/not
 network:
@@ -30,7 +30,7 @@ network:
     ema: 0.99999
     embed_dim: 100
     forward_drop_rate: 0.5
-    latent_dim: 100
+    z_dim: 100
     num_heads: 5
     patch_size: 2
     seq_len: 300

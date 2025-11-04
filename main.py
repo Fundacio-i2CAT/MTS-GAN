@@ -182,11 +182,8 @@ def main(args: Namespace):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default="config_tts.yaml",
+    parser.add_argument("--config", type=str, default="configs/tts-gan/running.yaml",
                         help="Path to YAML config file")
     argss = parser.parse_args()
-    import os
-    for i in os.listdir("configs/tts-gan"):
-        argss.config = "configs/tts-gan/" + i
-        argss.trainer['epochs'] = 21
+
     main(argss)

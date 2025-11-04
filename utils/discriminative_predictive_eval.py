@@ -11,14 +11,14 @@ from utils.load_synthetic import SyntheticGenerator
 from data.dataLoader import CustomDataset
 
 
-def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0.0.0.0:5004',
+def discriminative_predictive_evaluation(n_repetitions=2, tracking_uri='http://0.0.0.0:5000',
                                          run_id="f1bc0bef91394a86af291387a102a53a", epoch=-1):
     """
     Gets config from artifacts in mlflow, reads real data from dataset in config,
     generates synthetic data and computes predictive and discriminative metrics.
 
     """
-    ut.mlflow_init({"URI": "http://0.0.0.0:5004",
+    ut.mlflow_init({"URI": "http://0.0.0.0:5000",
                     "experiment_id": "pred_disc_eval",
                     "is_used": True,
                     "run_name": "ib-sh"

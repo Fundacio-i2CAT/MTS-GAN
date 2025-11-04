@@ -5,7 +5,7 @@ from torch.utils import data
 from utils.load_synthetic import SyntheticGenerator
 
 
-def generate_synthetic_data(num_samples, tracking_uri='http://0.0.0.0:5004',
+def generate_synthetic_data(num_samples, tracking_uri='http://0.0.0.0:5000',
                             run_id="f1bc0bef91394a86af291387a102a53a"):
     """Main Synthetic Data generation function"""
     syn_generator = SyntheticGenerator(run_id=run_id, tracking_uri=tracking_uri)
@@ -38,7 +38,7 @@ def parse_args():
     parser.add_argument(
         "--tracking_uri",
         type=str,
-        default="http://0.0.0.0:5004",
+        default="http://0.0.0.0:5000",
         help="Tracking URI for MLflow or equivalent service"
     )
 

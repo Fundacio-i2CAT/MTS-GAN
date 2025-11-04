@@ -9,8 +9,8 @@ data:
   val_score: fid_score_temporal
   verbose: false
 mlflow:
-  URI: http://0.0.0.0:5004
-  experiment_id: ttsmamba_ideko_elec_300
+  URI: http://0.0.0.0:5000
+  experiment_id: mts-gan
   is_used: true
   run_name: xp_da
 network:
@@ -75,3 +75,4 @@ trainer:
 validator:
   batch_size: 64
   val_freq: 10
+type: mts-gan

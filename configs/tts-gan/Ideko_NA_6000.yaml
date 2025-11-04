@@ -6,11 +6,11 @@ data:
   random_seed: 12345
   seq_len: 6000
   split_proportion: 0.2
-  val_score: fid_score_statistic
+  val_score: fid_score_temporal
   verbose: false
 mlflow:
-  URI: http://0.0.0.0:5004
-  experiment_id: ideko_tts_na_6000
+  URI: http://0.0.0.0:5000
+  experiment_id: tts-gan
   is_used: true
   run_name: xp_da
 network:
@@ -30,7 +30,7 @@ network:
     ema: 0.99999
     embed_dim: 150
     forward_drop_rate: 0.5
-    latent_dim: 100
+    z_dim: 100
     num_heads: 5
     patch_size: 100
     seq_len: 6000
@@ -76,3 +76,4 @@ trainer:
 validator:
   batch_size: 32
   val_freq: 20
+type: tts-gan

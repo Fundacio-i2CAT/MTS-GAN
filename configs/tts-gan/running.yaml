@@ -1,50 +1,48 @@
-type: "tts"
-
 data:
-  dataset_path: /data/extremexp/extremexp_data/ideko/not_anomalous_3periods_60subsampling_300seqLen.h5
+  dataset_path: data/Running.h5
   debug: false
   normalization: global_min_max
-  num_channels: 2
+  num_channels: 3
   random_seed: 12345
-  seq_len: 300
+  seq_len: 150
   split_proportion: 0.2
   val_score: fid_score_temporal
   verbose: false
 mlflow:
-  URI: http://0.0.0.0:5004
-  experiment_id: ideko_tts_na_300
+  URI: http://0.0.0.0:5000
+  experiment_id: tts-gan
   is_used: true
-  run_name: xp_da
+  run_name: ib-sh
 network:
   discriminator:
-    depth: 2
+    depth: 3
     drop_p: 0.5
-    emb_size: 100
+    emb_size: 150
     forward_drop_p: 0.5
-    in_channels: 2
+    in_channels: 3
     n_classes: 1
     patch_size: 2
-    seq_length: 300
+    seq_length: 150
   generator:
     attn_drop_rate: 0.5
-    channels: 2
-    depth: 2
+    channels: 3
+    depth: 3
     ema: 0.99999
-    embed_dim: 150
+    embed_dim: 50
     forward_drop_rate: 0.5
     z_dim: 100
     num_heads: 5
-    patch_size: 100
-    seq_len: 300
+    patch_size: 2
+    seq_len: 150
   init_type: xavier_uniform
 trainer:
-  batch_size: 4
+  batch_size: 32
   d_accumulated_times: 1
-  d_lr: 0.0001
-  early_stopping: 10
-  epochs: 51
+  d_lr: 0.0003
+  early_stopping: 15
+  epochs: 1001
   g_accumulated_times: 1
-  g_lr: 0.0001
+  g_lr: 0.0003
   loss:
     d_loss:
       loss_name: lsgan
@@ -78,3 +76,4 @@ trainer:
 validator:
   batch_size: 32
   val_freq: 20
+type: tts-gan

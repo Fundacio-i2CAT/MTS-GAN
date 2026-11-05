@@ -103,7 +103,19 @@ Find more information of i2CAT projects and IP rights at https://i2cat.net/tech-
 # License
 This code is licensed under the terms GNU Affero General Public License v3.0 (*AGPLv3*). Information about the license can be located at [link](https://www.gnu.org/licenses/agpl-3.0.html).
 If you find that this license doesn't fit with your requirements regarding the use, distribution or redistribution of our code for your specific work, please, don’t hesitate to contact the intellectual property managers in i2CAT at the following address: techtransfer@i2cat.net
- 
+
+# Citation
+If you find this repo useful, please cite our paper via
+```bibtex
+@article{folch2026mts,
+  title={MTS-GAN: Synthetic multivariate time series generation with the Mamba architecture},
+  author={Folch, Santiago Escuder and Graupera-Serra, Oriol and Calvo, Albert and Mu{\~n}oz, Borja and Guti{\'e}rrez, Gorka and Escrig, Josep and Compasti{\'e}, Maxime},
+  journal={Knowledge-Based Systems},
+  pages={115996},
+  year={2026},
+  publisher={Elsevier}
+}
+```
 ## Support
 For questions, issues, or collaboration inquiries, please contact:  
 santiago.escuder@i2cat.net
